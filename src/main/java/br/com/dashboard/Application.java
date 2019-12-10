@@ -35,20 +35,18 @@ public class Application {
                     if (kind.equals(StandardWatchEventKinds.ENTRY_CREATE)) {
                         System.out.println(eventDir + ": " + kind + ": " + eventPath);
 
-                        File file = eventPath.toFile();
+                        File file = new File(eventDir + File.separator + eventPath.toFile());
                         System.out.println("file: " + file);
 
                         if (eventPath.getFileName().toString().endsWith(".zip")) {
-                            File fileZip = new File(eventDir + File.separator + file);
-                            System.out.println("fileZip: " + fileZip);
+                            System.out.println("fileZip: " + file);
 
-                            unzip(fileZip.getAbsolutePath());
-                            fileZip.delete();
+                            unzip(file.getAbsolutePath());
+                            file.delete();
                         }
 
                         if (eventPath.getFileName().toString().endsWith(".xml")) {
-                            File fileXml = new File(eventDir + File.separator + file);
-                            System.out.println("Arquivo xml criado: " + fileXml);
+                            System.out.println("Arquivo xml criado: " + file);
                         }
                     }
                 }
@@ -89,12 +87,12 @@ public class Application {
      * @throws IOException
      */
     private static void extractFile(ZipInputStream zipInputStream, String filePath) throws IOException {
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
+        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(filePath));
         byte[] bytesIn = new byte[4096];
         int read = 0;
         while ((read = zipInputStream.read(bytesIn)) != -1) {
-            bos.write(bytesIn, 0, read);
+            bufferedOutputStream.write(bytesIn, 0, read);
         }
-        bos.close();
+        bufferedOutputStream.close();
     }
 }
