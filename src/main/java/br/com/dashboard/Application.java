@@ -1,6 +1,11 @@
 package br.com.dashboard;
 
+import br.com.dashboard.model.Cliente;
+import br.com.dashboard.model.Municipio;
+import br.com.dashboard.model.Produto;
+import br.com.dashboard.model.Transportadora;
 import br.inf.portalfiscal.nfe.schema.nfe.TNfeProc;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -10,14 +15,17 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+@SpringBootApplication
 public class Application {
 
     private static final String directory = "C:\\xml";
 
     public static void main(String[] args) {
+        //SpringApplication.run(Application.class, args);
 
         try (WatchService service = FileSystems.getDefault().newWatchService()) {
             Map<WatchKey, Path> keyMap = new HashMap<>();
@@ -42,21 +50,37 @@ public class Application {
                         System.out.println(eventDir + ": " + kind + ": " + eventPath);
 
                         File file = new File(eventDir + File.separator + eventPath.toFile());
-                        System.out.println("file: " + file);
 
-                        if (eventPath.getFileName().toString().endsWith(".zip")) {
+                        String mimeType = Files.probeContentType(eventPath);
+                        System.out.println("\nfile: " + file + " | type: " + mimeType);
+
+                        // Zip file
+                        if ((eventPath.getFileName().toString().endsWith(".zip")) &&
+                                (mimeType.equals("application/x-zip-compressed"))) {
+
                             System.out.println("fileZip: " + file);
 
                             unzip(file.getAbsolutePath());
                             file.delete();
                         }
 
-                        if (eventPath.getFileName().toString().endsWith(".xml")) {
+                        // Xml file
+                        if ((eventPath.getFileName().toString().endsWith(".xml")) &&
+                                (mimeType.equals("text/xml"))) {
+
                             System.out.println("Arquivo xml criado: " + file);
 
                             readXml(file.getAbsolutePath());
+                            file.delete();
                         }
                     }
+                }
+
+                TimeUnit.SECONDS.sleep(10);
+
+                boolean valid = watchKey.reset();
+                if (!valid) {
+                    break;
                 }
 
             } while (watchKey.reset());
@@ -192,6 +216,51 @@ public class Application {
                 System.out.println("dVenc..: " + wNfe.getNFe().getInfNFe().getCobr().getDup().get(i).getDVenc());
                 System.out.println("vDup...: " + wNfe.getNFe().getInfNFe().getCobr().getDup().get(i).getVDup());
             }
+
+
+            System.out.println("\nOBJETO [TRANSPORTADORA]");
+            Transportadora transportadora = new Transportadora();
+            transportadora.setNome(wNfe.getNFe().getInfNFe().getTransp().getTransporta().getXNome());
+            transportadora.setCnpj(wNfe.getNFe().getInfNFe().getTransp().getTransporta().getCNPJ());
+            transportadora.setIe(wNfe.getNFe().getInfNFe().getTransp().getTransporta().getIE());
+            transportadora.setEndereco(wNfe.getNFe().getInfNFe().getTransp().getTransporta().getXEnder());
+            transportadora.setMunicipio(wNfe.getNFe().getInfNFe().getTransp().getTransporta().getXMun());
+            transportadora.setUf(wNfe.getNFe().getInfNFe().getTransp().getTransporta().getUF().value());
+
+            System.out.println(transportadora);
+
+            System.out.println("\nOBJETO [PRODUTO]");
+            for (int i=0; i < wNfe.getNFe().getInfNFe().getDet().size(); i++) {
+                Produto produto = new Produto();
+                produto.setCodigoEmpresa(wNfe.getNFe().getInfNFe().getDet().get(i).getProd().getCProd());
+                produto.setDescricao(wNfe.getNFe().getInfNFe().getDet().get(i).getProd().getXProd());
+
+                System.out.println(produto);
+            }
+
+            System.out.println("\nOBJETO [MUNICIPIO]");
+            Municipio municipio = new Municipio();
+            municipio.setCodigo(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getCMun());
+            municipio.setNome(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getXMun());
+            municipio.setUf(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getUF().value());
+
+            System.out.println(municipio);
+
+            System.out.println("\nOBJETO [CLIENTE]");
+            Cliente cliente = new Cliente();
+            cliente.setNome(wNfe.getNFe().getInfNFe().getDest().getXNome());
+            cliente.setCnpj(wNfe.getNFe().getInfNFe().getDest().getCNPJ());
+            cliente.setIe(wNfe.getNFe().getInfNFe().getDest().getIE());
+            cliente.setEndereco(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getXLgr());
+            cliente.setNumero(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getNro());
+            cliente.setBairro(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getXBairro());
+            cliente.setMunicipio(municipio);
+            cliente.setUf(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getUF().value());
+            cliente.setCep(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getCEP());
+            cliente.setFone(wNfe.getNFe().getInfNFe().getDest().getEnderDest().getFone());
+            cliente.setEmail(wNfe.getNFe().getInfNFe().getDest().getEmail());
+
+            System.out.println(cliente);
         }
     }
 
