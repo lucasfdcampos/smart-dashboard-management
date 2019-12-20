@@ -5,6 +5,7 @@ import br.com.dashboard.model.Municipio;
 import br.com.dashboard.model.Produto;
 import br.com.dashboard.model.Transportadora;
 import br.inf.portalfiscal.nfe.schema.nfe.TNfeProc;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import javax.xml.bind.JAXBContext;
@@ -25,7 +26,7 @@ public class Application {
     private static final String directory = "C:\\xml";
 
     public static void main(String[] args) {
-        //SpringApplication.run(Application.class, args);
+        SpringApplication.run(Application.class, args);
 
         try (WatchService service = FileSystems.getDefault().newWatchService()) {
             Map<WatchKey, Path> keyMap = new HashMap<>();
