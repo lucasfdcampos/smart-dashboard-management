@@ -59,7 +59,7 @@ public class NFeDuplicatasController {
         return this.nFeDuplicatasService.findAllPaginationByNFe(idNFe);
     }
 
-    @GetMapping(value = "/search/{idNFe}")
+    @GetMapping(value = "/search")
     @ResponseStatus(HttpStatus.OK)
     public Page<NFeDuplicatas> search(@PathVariable("idNFe") Long idNFe,
                                       @RequestParam("searchTerm") String searchTerm,

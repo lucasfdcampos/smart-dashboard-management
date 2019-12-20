@@ -19,6 +19,7 @@ public class Fornecedor implements Serializable {
                       @NotNull @Size(max = 12) String ie, @NotNull String endereco, @Size(max = 10) String numero,
                       @NotNull String bairro, @NotNull Municipio municipio, @NotNull @Size(max = 2) String uf,
                       @NotNull String cep, String fone, String celular, String email) {
+        super();
         this.id = id;
         this.nome = nome;
         this.cnpj = cnpj;

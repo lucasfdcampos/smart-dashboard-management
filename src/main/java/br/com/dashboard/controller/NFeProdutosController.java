@@ -59,7 +59,7 @@ public class NFeProdutosController {
         return this.nFeProdutosService.findAllPaginationByNFe(idNFe);
     }
 
-    @GetMapping(value = "/search/{idNFe}")
+    @GetMapping(value = "/search")
     @ResponseStatus(HttpStatus.OK)
     public Page<NFeProdutos> search(@PathVariable("idNFe") Long idNFe,
                                     @RequestParam("searchTerm") String searchTerm,

@@ -15,6 +15,7 @@ public class TipoPagamento implements Serializable {
     }
 
     public TipoPagamento(Long id, @NotNull String descricao, StatusPagamento status) {
+        super();
         this.id = id;
         this.descricao = descricao;
         this.status = status;

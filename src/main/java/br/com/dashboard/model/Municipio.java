@@ -15,6 +15,7 @@ public class Municipio implements Serializable {
     }
 
     public Municipio(@Size(max = 7) String codigo, @NotNull String nome, @NotNull @Size(max = 2) String uf) {
+        super();
         this.codigo = codigo;
         this.nome = nome;
         this.uf = uf;
