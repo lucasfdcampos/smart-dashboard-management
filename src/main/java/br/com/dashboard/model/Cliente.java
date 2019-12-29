@@ -18,7 +18,7 @@ public class Cliente implements Serializable {
     public Cliente(Long id, @NotNull String nome, @NotNull @Size(max = 14) String cnpj,
                    @NotNull @Size(max = 12) String ie, @NotNull String endereco, @Size(max = 10) String numero,
                    @NotNull String bairro, @NotNull Municipio municipio, @NotNull @Size(max = 2) String uf,
-                   @NotNull String cep, String fone, String email) {
+                   @NotNull String cep, String fone, String celular, String email) {
         super();
         this.id = id;
         this.nome = nome;
@@ -31,6 +31,7 @@ public class Cliente implements Serializable {
         this.uf = uf;
         this.cep = cep;
         this.fone = fone;
+        this.celular = celular;
         this.email = email;
     }
 
@@ -196,6 +197,6 @@ public class Cliente implements Serializable {
     public String toString() {
         return "Cliente [id=" + id + ", nome=" + nome + ", cnpj=" + cnpj + ", ie=" + ie + ", endereco=" + endereco +
                 ", numero=" + numero + ", bairro=" + bairro + ", municipio=" + municipio + ", uf=" + uf +
-                ", cep=" + cep + ", fone=" + fone + ", email=" + email + "]";
+                ", cep=" + cep + ", fone=" + fone + ", celular=" + celular + ", email=" + email + "]";
     }
 }

@@ -17,10 +17,10 @@ public class MunicipioController {
     @Autowired
     private MunicipioService municipioService;
 
-    @GetMapping(value = "/{id}")
+    @GetMapping(value = "/{codigo}")
     @ResponseStatus(HttpStatus.OK)
     public Municipio getMunicipio(@PathVariable("codigo") String codigo) {
-        return this.municipioService.findById(codigo);
+        return this.municipioService.findByCodigo(codigo);
     }
 
     @GetMapping(value = "/nome/{nome}/uf/{uf}")
@@ -35,17 +35,22 @@ public class MunicipioController {
         return municipio;
     }
 
-    @PutMapping(value = "/{id}")
+    @PutMapping(value = "/{codigo}")
     @ResponseStatus(HttpStatus.OK)
     public Municipio updateMunicipio(@PathVariable("codigo") String codigo, @RequestBody Municipio municipio) {
         this.municipioService.update(codigo, municipio);
         return municipio;
     }
 
-    @DeleteMapping(value = "/{id}")
+    @DeleteMapping(value = "/{codigo}")
     ResponseEntity<String> deleteMunicipio(@PathVariable("codigo") String codigo) {
-        this.municipioService.delete(codigo);
-        return new ResponseEntity<String>("DELETED", HttpStatus.OK);
+        try {
+            this.municipioService.delete(codigo);
+            return new ResponseEntity<String>("DELETED", HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<String>(e.toString(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping(value = "/list")

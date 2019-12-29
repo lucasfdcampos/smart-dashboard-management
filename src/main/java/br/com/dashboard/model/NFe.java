@@ -4,6 +4,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -18,10 +19,12 @@ public class NFe implements Serializable {
     }
 
     public NFe(Long id, @NotNull @Size(max = 44) String chave, @NotNull @Size(max = 8) String codigo,
-               @NotNull @Size(max = 9) String numero, TipoNFe tipo, @NotNull @Size(max = 3) String serie,
-               Date dataEmissao, String naturezaOperacao, @NotNull @Size(max = 1) String finalidadeEmissao,
-               @NotNull Cliente cliente, List<NFeProdutos> nfeProdutos, List<NFeDuplicatas> nfeDuplicatas,
-               Double valorProdutos, Double valorDesconto, Double valorLiquido, Double valorTotal) {
+               @NotNull @Size(max = 9) String numero, @NotNull @Size(max = 1) String tipo,
+               @NotNull @Size(max = 3) String serie, Date dataEmissao, String naturezaOperacao,
+               @NotNull @Size(max = 1) String finalidadeEmissao, @NotNull Cliente cliente,
+               List<NFeProdutos> nfeProdutos, List<NFeDuplicatas> nfeDuplicatas,
+               @NotNull Double valorProdutos, @NotNull Double valorDesconto, @NotNull Double valorLiquido,
+               @NotNull Double valorTotal, @NotNull Transportadora transportadora) {
         super();
         this.id = id;
         this.chave = chave;
@@ -39,6 +42,7 @@ public class NFe implements Serializable {
         this.valorDesconto = valorDesconto;
         this.valorLiquido = valorLiquido;
         this.valorTotal = valorTotal;
+        this.transportadora = transportadora;
     }
 
     @Id
@@ -61,9 +65,10 @@ public class NFe implements Serializable {
     @Column(nullable = false, length = 9, name = "numero")
     private String numero;
 
-    @Enumerated(value = EnumType.STRING)
-    @Column(nullable = false, name="tipo")
-    private TipoNFe tipo;
+    @NotNull
+    @Size(max = 1)
+    @Column(nullable = false, length = 1, name ="tipo")
+    private String tipo;
 
     @NotNull
     @Size(max = 3)
@@ -109,6 +114,11 @@ public class NFe implements Serializable {
     @Column(nullable = false, name = "valor_total")
     private Double valorTotal;
 
+    @NotNull
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "transportadora", referencedColumnName = "id")
+    private Transportadora transportadora;
+
     public Long getId() {
         return id;
     }
@@ -141,11 +151,11 @@ public class NFe implements Serializable {
         this.numero = numero;
     }
 
-    public TipoNFe getTipo() {
+    public String getTipo() {
         return tipo;
     }
 
-    public void setTipoNFe(TipoNFe tipo) {
+    public void setTipo(String tipo) {
         this.tipo = tipo;
     }
 
@@ -237,13 +247,37 @@ public class NFe implements Serializable {
         this.valorTotal = valorTotal;
     }
 
+    public Transportadora getTransportadora() {
+        return transportadora;
+    }
+
+    public void setTransportadora(Transportadora transportadora) {
+        this.transportadora = transportadora;
+    }
+
+    public void addProduto(NFeProdutos nFeProduto) {
+        if (this.nfeProdutos == null) {
+            this.nfeProdutos = new ArrayList<>();
+        }
+        nFeProduto.setNfe(this);
+        this.nfeProdutos.add(nFeProduto);
+    }
+
+    public void addDuplicata(NFeDuplicatas nFeDuplicata) {
+        if (this.nfeDuplicatas == null) {
+            this.nfeDuplicatas = new ArrayList<>();
+        }
+        nFeDuplicata.setNfe(this);
+        this.nfeDuplicatas.add(nFeDuplicata);
+    }
+
     @Override
     public String toString() {
-        return "NFe [id=" + id + ", chave=" + chave + ", codigo=" + codigo + ", numero=" + numero +
-                ", tipo=" + tipo + ", serie=" + serie + ", dataEmissao=" + dataEmissao +
-                ", naturezaOperacao=" + naturezaOperacao + ", finalidadeEmissao=" + finalidadeEmissao +
-                ", cliente=" + cliente + ", nfeProdutos=" + nfeProdutos + ", nfeDuplicatas=" + nfeDuplicatas +
-                ", valorProdutos=" + valorProdutos + ", valorDesconto=" + valorDesconto +
-                ", valorLiquido=" + valorLiquido + ", valorTotal=" + valorTotal + "]";
+        return "NFe [id=" + id + ", chave=" + chave + ", codigo=" + codigo + ", numero=" + numero + ", tipo=" + tipo +
+                ", serie=" + serie + ", dataEmissao=" + dataEmissao + ", naturezaOperacao=" + naturezaOperacao +
+                ", finalidadeEmissao=" + finalidadeEmissao + ", cliente=" + cliente + ", nfeProdutos=" + nfeProdutos +
+                ", nfeDuplicatas=" + nfeDuplicatas + ", valorProdutos=" + valorProdutos +
+                ", valorDesconto=" + valorDesconto + ", valorLiquido=" + valorLiquido + ", valorTotal=" + valorTotal +
+                ", transportadora=" + transportadora + "]";
     }
 }

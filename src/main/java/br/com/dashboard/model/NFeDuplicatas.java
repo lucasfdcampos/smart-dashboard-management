@@ -2,6 +2,7 @@ package br.com.dashboard.model;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -15,8 +16,8 @@ public class NFeDuplicatas implements Serializable {
         super();
     }
 
-    public NFeDuplicatas(Long id, NFe nfe, @NotNull String numero, Date dataVencimento, @NotNull Double valor) {
-        super();
+    public NFeDuplicatas(Long id, NFe nfe, @NotNull @Size(max = 3) String numero, Date dataVencimento,
+                         @NotNull Double valor) {
         this.id = id;
         this.nfe = nfe;
         this.numero = numero;
@@ -34,7 +35,8 @@ public class NFeDuplicatas implements Serializable {
     private NFe nfe;
 
     @NotNull
-    @Column(nullable = false, name = "numero")
+    @Size(max = 3)
+    @Column(nullable = false, length = 3, name = "numero")
     private String numero;
 
     @Temporal(TemporalType.TIMESTAMP)

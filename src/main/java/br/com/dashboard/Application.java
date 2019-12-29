@@ -1,9 +1,6 @@
 package br.com.dashboard;
 
-import br.com.dashboard.model.Cliente;
-import br.com.dashboard.model.Municipio;
-import br.com.dashboard.model.Produto;
-import br.com.dashboard.model.Transportadora;
+import br.com.dashboard.xmlpersistence.ExtractNFe;
 import br.inf.portalfiscal.nfe.schema.nfe.TNfeProc;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -142,9 +139,14 @@ public class Application {
     private static void readXml(String xmlFile) throws Exception {
 
         String xml = extractXml(xmlFile);
-
         TNfeProc wNfe = getNfe(xml);
+
         if (wNfe != null) {
+            ExtractNFe extractNFe = new ExtractNFe();
+            extractNFe.setNFe(wNfe);
+            extractNFe.persistirDados();
+
+            /*
             System.out.println("-- DADOS NFe ----------------------------");
             System.out.println("CHAVE..: " + wNfe.getProtNFe().getInfProt().getChNFe());
             System.out.println("cNF....: " + wNfe.getNFe().getInfNFe().getIde().getCNF());
@@ -262,6 +264,7 @@ public class Application {
             cliente.setEmail(wNfe.getNFe().getInfNFe().getDest().getEmail());
 
             System.out.println(cliente);
+            */
         }
     }
 

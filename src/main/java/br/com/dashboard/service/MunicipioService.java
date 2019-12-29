@@ -20,7 +20,6 @@ public class MunicipioService {
     private MunicipioRepository municipioRepository;
 
     public MunicipioService() {
-        super();
     }
 
     public MunicipioService(MunicipioRepository municipioRepository) {
@@ -38,11 +37,15 @@ public class MunicipioService {
     }
 
     public void delete(String codigo) {
-        this.municipioRepository.deleteById(codigo);
+        Municipio searchMunicipio = null;
+        try {
+            searchMunicipio = this.municipioRepository.findByCodigo(codigo);
+            this.municipioRepository.delete(searchMunicipio);
+        } catch (Exception e) { }
     }
 
-    public Municipio findById(String codigo) {
-        return this.municipioRepository.getOne(codigo);
+    public Municipio findByCodigo(String codigo) {
+        return this.municipioRepository.findByCodigo(codigo);
     }
 
     public Municipio findByNomeAndUF(String nome, String uf) {

@@ -99,6 +99,14 @@ public class ContasReceber implements Serializable {
         this.cliente = cliente;
     }
 
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
     public TipoPagamento getTipoPagamento() {
         return tipoPagamento;
     }

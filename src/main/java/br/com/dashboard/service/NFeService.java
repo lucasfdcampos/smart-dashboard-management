@@ -30,6 +30,18 @@ public class NFeService {
 
     public void save(NFe nFe) {
         this.nFeRepository.save(nFe);
+
+        if (nFe.getNfeProdutos() != null) {
+            nFe.getNfeProdutos()
+                    .parallelStream()
+                    .forEach(nFe::addProduto);
+        }
+
+        if (nFe.getNfeDuplicatas() != null) {
+            nFe.getNfeDuplicatas()
+                    .parallelStream()
+                    .forEach(nFe::addDuplicata);
+        }
     }
 
     public void update(Long id, NFe nFe) {

@@ -11,6 +11,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MunicipioRepository extends JpaRepository<Municipio, String> {
 
+    @Query("select m from Municipio m where m.codigo = ?1")
+    Municipio findByCodigo(String codigo);
+
     @Query("select m from Municipio m where m.nome = ?1 and m.uf = ?2")
     Municipio findByNomeAndUF(String nome, String uf);
 

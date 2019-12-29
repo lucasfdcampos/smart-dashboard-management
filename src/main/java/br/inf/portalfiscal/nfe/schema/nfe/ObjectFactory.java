@@ -508,11 +508,11 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link TNFe.InfNFe.Pag.Card }
+     * Create an instance of {@link TNFe.InfNFe.Pag.DetPag.Card }
      * 
      */
-    public TNFe.InfNFe.Pag.Card createTNFeInfNFePagCard() {
-        return new TNFe.InfNFe.Pag.Card();
+    public TNFe.InfNFe.Pag.DetPag.Card createTNFeInfNFePagCard() {
+        return new TNFe.InfNFe.Pag.DetPag.Card();
     }
 
     /**
