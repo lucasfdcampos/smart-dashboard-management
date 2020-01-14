@@ -1,20 +1,35 @@
-package br.com.dashboard.xmlpersistence;
+package br.com.dashboard.service;
 
 import br.com.dashboard.model.*;
-import br.com.dashboard.service.*;
 import br.inf.portalfiscal.nfe.schema.nfe.TNfeProc;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
+import java.io.*;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
-@Controller
-public class ExtractNFe {
+@Service
+@Transactional
+public class ExtractNFeService {
+
+    private static final String directory = "C:\\xml";
 
     private TNfeProc xNFe;
+
+    @Autowired
+    private NFeService nFeService;
 
     @Autowired
     private MunicipioService municipioService;
@@ -29,24 +44,101 @@ public class ExtractNFe {
     private ProdutoService produtoService;
 
     @Autowired
-    private NFeService nFeService;
+    private TipoPagamentoService tipoPagamentoService;
 
     @Autowired
     private ContasReceberService contasReceberService;
 
-    @Autowired
-    private TipoPagamentoService tipoPagamentoService;
-
-    public ExtractNFe() {
-        //this.municipioDao = new MunicipioDao();
+    public ExtractNFeService() {
     }
 
-    public TNfeProc getNFe() {
-        return xNFe;
+    public String sweepDirectory() throws Exception {
+        File dir = new File(directory);
+
+        // Unzip files
+        for (File arquivo : dir.listFiles()) {
+            String mimeType = Files.probeContentType(arquivo.toPath());
+
+            if (mimeType.equals("application/x-zip-compressed")) {
+                unzip(arquivo.getAbsolutePath());
+                arquivo.delete();
+            }
+        }
+
+        // Xml files
+        for (File arquivo : dir.listFiles()) {
+            String mimeType = Files.probeContentType(arquivo.toPath());
+
+            if (mimeType.equals("text/xml")) {
+                readXml(arquivo.getAbsolutePath());
+                arquivo.delete();
+            }
+        }
+        return "OK";
     }
 
-    public void setNFe(TNfeProc xNFe) {
-        this.xNFe = xNFe;
+    private void unzip(String zipFilePath) throws IOException {
+        ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFilePath));
+        ZipEntry zipEntry = zipInputStream.getNextEntry();
+
+        // iterates entries (xmls)
+        while (zipEntry != null) {
+            String filePath = ExtractNFeService.directory + File.separator + zipEntry.getName();
+
+            if (!zipEntry.isDirectory()) {
+                extractFile(zipInputStream, filePath);
+            }
+            zipInputStream.closeEntry();
+            zipEntry = zipInputStream.getNextEntry();
+        }
+        zipInputStream.close();
+    }
+
+    private void extractFile(ZipInputStream zipInputStream, String filePath) throws IOException {
+        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(filePath));
+        byte[] bytesIn = new byte[4096];
+        int read = 0;
+        while ((read = zipInputStream.read(bytesIn)) != -1) {
+            bufferedOutputStream.write(bytesIn, 0, read);
+        }
+        bufferedOutputStream.close();
+    }
+
+    private void readXml(String xmlFilePath) throws Exception {
+        String xml = extractXml(xmlFilePath);
+        xNFe = getNfeProc(xml);
+
+        if (xNFe != null) {
+            System.out.println("#\nCHAVE: " + xNFe.getProtNFe().getInfProt().getChNFe().trim());
+            persistirDados();
+        }
+    }
+
+    private String extractXml(String xmlFile) throws IOException {
+        String linha = "";
+        StringBuilder xml = new StringBuilder();
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                new FileInputStream(xmlFile)));
+
+        while ((linha = in.readLine()) != null) {
+            xml.append(linha);
+        }
+        in.close();
+
+        return xml.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private TNfeProc getNfeProc(String xml) throws Exception {
+        try {
+            JAXBContext context = JAXBContext.newInstance(TNfeProc.class);
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            return unmarshaller.unmarshal(new StreamSource(new StringReader(xml)), TNfeProc.class).getValue();
+
+        } catch (JAXBException e) {
+            throw new Exception(e.toString());
+        }
     }
 
     /**
@@ -54,7 +146,6 @@ public class ExtractNFe {
      * Verifica o CNPJ do emissor e da Chave NFe.
      */
     private boolean validarEmissorNFe(String cnpj, String chave) {
-
         boolean valid = false;
         String cnpjEmissor = "33564743000143";
 
@@ -64,20 +155,23 @@ public class ExtractNFe {
         return valid;
     }
 
-    public void persistirDados() {
+    private void persistirDados() throws ParseException {
 
-        System.out.println("CHAVE: " + xNFe.getProtNFe().getInfProt().getChNFe());
+        if (validarEmissorNFe(xNFe.getNFe().getInfNFe().getEmit().getCNPJ(),
+                xNFe.getProtNFe().getInfProt().getChNFe())) {
 
-        try {
-            if (validarEmissorNFe(xNFe.getNFe().getInfNFe().getEmit().getCNPJ(),
-                    xNFe.getProtNFe().getInfProt().getChNFe())) {
+            NFe nFe = null;
+            try {
+                nFe = this.nFeService.findByChave(xNFe.getProtNFe().getInfProt().getChNFe().trim());
+            } catch (Exception e) { }
+
+            if (nFe == null || nFe.getChave().isEmpty()) {
 
                 // -- Municipio
-                Municipio municipio = persistirMunicipioDestinatario();
+                Municipio municipio = persistirMunicipio();
                 System.out.println(municipio);
 
-                /*
-                // -- Transportadora
+                // - Transportadora
                 Transportadora transportadora = persistirTransportadora();
                 System.out.println(transportadora);
 
@@ -87,18 +181,18 @@ public class ExtractNFe {
 
                 // -- Produtos
                 List<NFeProdutos> nFeProdutos = persistirNFeProdutos();
-                for (int i = 0; i < nFeProdutos.size(); i++) {
-                    System.out.println(nFeProdutos.get(i));
+                for (NFeProdutos nFeProduto : nFeProdutos) {
+                    System.out.println(nFeProduto);
                 }
 
                 // -- Duplicatas
                 List<NFeDuplicatas> nFeDuplicatas = persistirNFeDuplicatas();
-                for (int j = 0; j < nFeDuplicatas.size(); j++) {
-                    System.out.println(nFeDuplicatas.get(j));
+                for (NFeDuplicatas nFeDuplicata : nFeDuplicatas) {
+                    System.out.println(nFeDuplicata);
                 }
 
                 // -- NFe
-                NFe nFe = persistirNFe(cliente, nFeProdutos, nFeDuplicatas, transportadora);
+                nFe = persistirNFe(cliente, transportadora, nFeProdutos, nFeDuplicatas);
                 System.out.println(nFe);
 
                 // -- Tipo Pagamento
@@ -108,29 +202,17 @@ public class ExtractNFe {
                 // -- Contas a Receber
                 persistirContasReceber(nFe, cliente, tipoPagamento);
 
-                System.out.println("PERSISTIDO NFE: " + nFe.getNumero());
-                */
+                System.out.println("\nPERSISTIDO NFE: " + nFe.getNumero());
             }
-
-        } catch (Exception e) {
-            System.out.println(e.toString());
         }
     }
 
-    private Municipio persistirMunicipioDestinatario() {
-
+    private Municipio persistirMunicipio() {
         Municipio municipio = new Municipio();
         municipio.setCodigo(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getCMun().trim());
         municipio.setNome(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getXMun().toUpperCase().trim());
         municipio.setUf(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getUF().value());
 
-
-
-
-        //this.municipioService.save(municipio);
-
-
-        /*
         Municipio searchMunicipio = null;
         try {
             searchMunicipio = this.municipioService.findByCodigo(municipio.getCodigo());
@@ -141,16 +223,13 @@ public class ExtractNFe {
         } else {
             this.municipioService.update(searchMunicipio.getCodigo(), municipio);
         }
-        */
-
         return municipio;
     }
 
     private Transportadora persistirTransportadora() {
-
         String endereco = xNFe.getNFe().getInfNFe().getTransp().getTransporta().getXEnder()
                 .replace(xNFe.getNFe().getInfNFe().getTransp().getTransporta().getXMun().trim() +
-                        xNFe.getNFe().getInfNFe().getTransp().getTransporta().getUF().value().trim(),
+                                xNFe.getNFe().getInfNFe().getTransp().getTransporta().getUF().value().trim(),
                         "").toUpperCase().trim();
 
         Transportadora transportadora = new Transportadora();
@@ -161,7 +240,6 @@ public class ExtractNFe {
         transportadora.setMunicipio(xNFe.getNFe().getInfNFe().getTransp().getTransporta().getXMun().toUpperCase().trim());
         transportadora.setUf(xNFe.getNFe().getInfNFe().getTransp().getTransporta().getUF().value());
 
-        /*
         Transportadora searchTransportadora = null;
         try {
             searchTransportadora = this.transportadoraService.findByCnpj(transportadora.getCnpj());
@@ -172,12 +250,14 @@ public class ExtractNFe {
         } else {
             this.transportadoraService.update(searchTransportadora.getId(), transportadora);
         }
-        */
-
         return transportadora;
     }
 
     private Cliente persistirCliente(Municipio municipio) {
+        Municipio searchMunicipio = null;
+        try {
+            searchMunicipio = this.municipioService.findByCodigo(municipio.getCodigo());
+        } catch (Exception e) { }
 
         Cliente cliente = new Cliente();
         cliente.setNome(xNFe.getNFe().getInfNFe().getDest().getXNome().toUpperCase().trim());
@@ -186,13 +266,12 @@ public class ExtractNFe {
         cliente.setEndereco(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getXLgr().toUpperCase().trim());
         cliente.setNumero(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getNro().toUpperCase().trim());
         cliente.setBairro(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getXBairro().toUpperCase().trim());
-        cliente.setMunicipio(municipio);
+        cliente.setMunicipio(searchMunicipio);
         cliente.setUf(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getUF().value());
         cliente.setCep(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getCEP().trim());
         cliente.setFone(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getFone().trim());
         cliente.setEmail(xNFe.getNFe().getInfNFe().getDest().getEmail().toUpperCase().trim());
 
-        /*
         Cliente searchCliente = null;
         try {
             searchCliente = this.clienteService.findByCnpj(cliente.getCnpj());
@@ -203,17 +282,16 @@ public class ExtractNFe {
         } else {
             this.clienteService.update(searchCliente.getId(), cliente);
         }
-        */
-
         return cliente;
     }
 
     private List<NFeProdutos> persistirNFeProdutos() {
-
-        List<NFeProdutos> nFeProdutos = null;
+        List<NFeProdutos> nFeProdutos = new ArrayList<>();
 
         for (int index = 0; index < xNFe.getNFe().getInfNFe().getDet().size(); index++) {
             Produto produto = persistirProduto(index);
+            System.out.println(produto);
+
             NFeProdutos nFeProduto = persistirNFeProduto(index, produto);
             nFeProdutos.add(nFeProduto);
         }
@@ -221,12 +299,10 @@ public class ExtractNFe {
     }
 
     private Produto persistirProduto(int index) {
-
         Produto produto = new Produto();
         produto.setCodigoEmpresa(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getCProd().trim());
         produto.setDescricao(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getXProd().toUpperCase().trim());
 
-        /*
         Produto searchProduto = null;
         try {
             searchProduto = this.produtoService.findByDescricao(produto.getDescricao());
@@ -235,17 +311,19 @@ public class ExtractNFe {
         if (searchProduto == null) {
             this.produtoService.save(produto);
         } else {
-            this.produtoService.update(produto.getId(), produto);
+            this.produtoService.update(searchProduto.getId(), produto);
         }
-        */
-
         return produto;
     }
 
     private NFeProdutos persistirNFeProduto(int index, Produto produto) {
+        Produto searchProduto = null;
+        try {
+            searchProduto = this.produtoService.findById(produto.getId());
+        } catch (Exception e) { }
 
         NFeProdutos nFeProduto = new NFeProdutos();
-        nFeProduto.setProduto(produto);
+        nFeProduto.setProduto(searchProduto);
         nFeProduto.setNcm(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getNCM().trim());
         nFeProduto.setCfop(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getCFOP().trim());
         nFeProduto.setUnidade(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getUCom().toUpperCase().trim());
@@ -256,12 +334,9 @@ public class ExtractNFe {
     }
 
     private List<NFeDuplicatas> persistirNFeDuplicatas() throws ParseException {
+        List<NFeDuplicatas> nFeDuplicatas = new ArrayList<>();
 
-        List<NFeDuplicatas> nFeDuplicatas = null;
-
-        if ((xNFe.getNFe().getInfNFe().getCobr().getDup() == null) ||
-                (xNFe.getNFe().getInfNFe().getCobr().getDup().size() == 0)) {
-
+        if (xNFe.getNFe().getInfNFe().getCobr() == null) {
             NFeDuplicatas nFeDuplicata = new NFeDuplicatas();
             nFeDuplicata.setNumero("001");
             nFeDuplicata.setDataVencimento(converterToDate(xNFe.getNFe().getInfNFe().getIde().getDhEmi()));
@@ -272,7 +347,7 @@ public class ExtractNFe {
             for (int index = 0; index < xNFe.getNFe().getInfNFe().getCobr().getDup().size(); index++) {
                 NFeDuplicatas nFeDuplicata = new NFeDuplicatas();
                 nFeDuplicata.setNumero(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getNDup().trim());
-                nFeDuplicata.setDataVencimento(converterToDate(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getDVenc()));
+                nFeDuplicata.setDataVencimento(converterToDateSimple(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getDVenc()));
                 nFeDuplicata.setValor(converterToDouble(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getVDup()));
                 nFeDuplicatas.add(nFeDuplicata);
             }
@@ -280,8 +355,24 @@ public class ExtractNFe {
         return nFeDuplicatas;
     }
 
-    private NFe persistirNFe(Cliente cliente, List<NFeProdutos> nFeProdutos, List<NFeDuplicatas> nFeDuplicatas,
-                             Transportadora transportadora) throws ParseException {
+    private NFe persistirNFe(Cliente cliente, Transportadora transportadora, List<NFeProdutos> nFeProdutos,
+                             List<NFeDuplicatas> nFeDuplicatas) throws ParseException {
+        Cliente searchCliente = null;
+        try {
+            searchCliente = this.clienteService.findById(cliente.getId());
+        } catch (Exception e) { }
+
+        Transportadora searchTransportadora = null;
+        try {
+            searchTransportadora = this.transportadoraService.findById(transportadora.getId());
+        } catch (Exception e) { }
+
+        Double valorLiquido = 0d;
+        if (xNFe.getNFe().getInfNFe().getCobr() == null) {
+            valorLiquido = converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVNF());
+        } else {
+            valorLiquido = converterToDouble(xNFe.getNFe().getInfNFe().getCobr().getFat().getVLiq());
+        }
 
         NFe nFe = new NFe();
         nFe.setChave(xNFe.getProtNFe().getInfProt().getChNFe().trim());
@@ -292,64 +383,60 @@ public class ExtractNFe {
         nFe.setDataEmissao(converterToDate(xNFe.getNFe().getInfNFe().getIde().getDhEmi()));
         nFe.setNaturezaOperacao(xNFe.getNFe().getInfNFe().getIde().getNatOp().toUpperCase().trim());
         nFe.setFinalidadeEmissao(xNFe.getNFe().getInfNFe().getIde().getFinNFe().trim());
-        nFe.setCliente(cliente);
+        nFe.setCliente(searchCliente);
         nFe.setNfeProdutos(nFeProdutos);
         nFe.setNfeDuplicatas(nFeDuplicatas);
         nFe.setValorProdutos(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVProd()));
         nFe.setValorDesconto(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVDesc()));
-        nFe.setValorLiquido(converterToDouble(xNFe.getNFe().getInfNFe().getCobr().getFat().getVLiq()));
+        nFe.setValorLiquido(valorLiquido);
         nFe.setValorTotal(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVNF()));
-        nFe.setTransportadora(transportadora);
-        /*
+        nFe.setTransportadora(searchTransportadora);
         this.nFeService.save(nFe);
-        */
         return nFe;
     }
 
     private TipoPagamento persistirTipoPagamento() {
-
-        TipoPagamento tipoPagamento = null;
+        TipoPagamento tipoPagamento;
 
         String detPag = xNFe.getNFe().getInfNFe().getPag().get(0).getDetPag().getTPag().trim();
 
         // Modelo atual [sempre com valor 99-Outros]
         if (detPag.equals("99")) {
 
-            if ((xNFe.getNFe().getInfNFe().getCobr().getDup() == null) ||
-                    (xNFe.getNFe().getInfNFe().getCobr().getDup().size() == 0)) {
-
-                TipoPagamento searchTipoPagamento = this.tipoPagamentoService.findByDescricao("DEPOSITO");
+            if (xNFe.getNFe().getInfNFe().getCobr() == null) {
+                TipoPagamento searchTipoPagamento = null;
+                try {
+                    searchTipoPagamento = this.tipoPagamentoService.findByDescricao("DEPOSITO");
+                } catch (Exception e) { }
 
                 if (searchTipoPagamento == null) {
                     tipoPagamento = new TipoPagamento();
                     tipoPagamento.setDescricao("DEPOSITO");
                     tipoPagamento.setStatus(StatusPagamento.VISTA);
-                    /*
                     this.tipoPagamentoService.save(tipoPagamento);
-                    */
 
                 } else {
                     tipoPagamento = searchTipoPagamento;
                 }
 
             } else {
-                TipoPagamento searchTipoPagamento = this.tipoPagamentoService.findByDescricao("BOLETO");
+                TipoPagamento searchTipoPagamento = null;
+                try {
+                    searchTipoPagamento = this.tipoPagamentoService.findByDescricao("BOLETO");
+                } catch (Exception e) { }
 
                 if (searchTipoPagamento == null) {
                     tipoPagamento = new TipoPagamento();
                     tipoPagamento.setDescricao("BOLETO");
                     tipoPagamento.setStatus(StatusPagamento.PRAZO);
-                    /*
                     this.tipoPagamentoService.save(tipoPagamento);
-                    */
                 } else {
                     tipoPagamento = searchTipoPagamento;
                 }
             }
         } else {
-
             String descricao;
-            StatusPagamento statusPagamento = null;
+            StatusPagamento statusPagamento;
 
             switch (detPag) {
                 case "01":
@@ -397,7 +484,10 @@ public class ExtractNFe {
                     statusPagamento = StatusPagamento.VISTA;
             }
 
-            TipoPagamento searchTipoPagamento = this.tipoPagamentoService.findByDescricao(descricao);
+            TipoPagamento searchTipoPagamento = null;
+            try {
+                searchTipoPagamento = this.tipoPagamentoService.findByDescricao(descricao);
+            } catch (Exception e) { }
 
             if (searchTipoPagamento == null) {
                 tipoPagamento = new TipoPagamento();
@@ -411,48 +501,49 @@ public class ExtractNFe {
         return tipoPagamento;
     }
 
-    private void persistirContasReceber(NFe nFe, Cliente cliente,
-                                                 TipoPagamento tipoPagamento) throws ParseException {
-
+    private void persistirContasReceber(NFe nFe, Cliente cliente, TipoPagamento tipoPagamento) throws ParseException {
         StatusConta statusConta = verificarStatusConta(tipoPagamento);
 
-        if ((xNFe.getNFe().getInfNFe().getCobr().getDup() == null) ||
-                (xNFe.getNFe().getInfNFe().getCobr().getDup().size() == 0)) {
+        Cliente searchCliente = null;
+        try {
+            searchCliente = this.clienteService.findById(cliente.getId());
+        } catch (Exception e) { }
 
+        TipoPagamento searchTipoPagamento = null;
+        try {
+            searchTipoPagamento = this.tipoPagamentoService.findById(tipoPagamento.getId());
+        } catch (Exception e) { }
+
+        if (xNFe.getNFe().getInfNFe().getCobr() == null) {
             ContasReceber contasReceber = new ContasReceber();
-            contasReceber.setDocumento(nFe.getNumero());
-            contasReceber.setCliente(cliente);
-            contasReceber.setDescricao("NFe: " + nFe.getNumero().trim() + " - Cliente: " + cliente.getNome().trim());
-            contasReceber.setTipoPagamento(tipoPagamento);
+            contasReceber.setDocumento(nFe.getNumero().trim());
+            contasReceber.setCliente(searchCliente);
+            contasReceber.setDescricao("NFe: " + nFe.getNumero().trim() + " - Cliente: " + searchCliente.getNome().trim());
+            contasReceber.setTipoPagamento(searchTipoPagamento);
             contasReceber.setDataVencimento(converterToDate(xNFe.getNFe().getInfNFe().getIde().getDhEmi()));
             contasReceber.setValor(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVNF()));
             contasReceber.setDataRecebimento(contasReceber.getDataVencimento());
             contasReceber.setValorRecebido(contasReceber.getValor());
             contasReceber.setStatus(statusConta);
-            /*
             this.contasReceberService.save(contasReceber);
-            */
 
         } else {
             for (int index = 0; index < xNFe.getNFe().getInfNFe().getCobr().getDup().size(); index++) {
                 ContasReceber contasReceber = new ContasReceber();
-                contasReceber.setDocumento(nFe.getNumero());
-                contasReceber.setCliente(cliente);
-                contasReceber.setDescricao("NFe: " + nFe.getNumero().trim() + " - Cliente: " + cliente.getNome().trim());
-                contasReceber.setTipoPagamento(tipoPagamento);
-                contasReceber.setDataVencimento(converterToDate(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getDVenc()));
+                contasReceber.setDocumento(nFe.getNumero().trim());
+                contasReceber.setCliente(searchCliente);
+                contasReceber.setDescricao("NFe: " + nFe.getNumero().trim() + " - Cliente: " + searchCliente.getNome().trim());
+                contasReceber.setTipoPagamento(searchTipoPagamento);
+                contasReceber.setDataVencimento(converterToDateSimple(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getDVenc()));
                 contasReceber.setValor(converterToDouble(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getVDup()));
                 contasReceber.setStatus(statusConta);
-                /*
                 this.contasReceberService.save(contasReceber);
-                */
             }
         }
     }
 
     private StatusConta verificarStatusConta(TipoPagamento tipoPagamento) {
-
-        StatusConta statusConta = null;
+        StatusConta statusConta;
         StatusPagamento statusPagamento = null;
         try {
             statusPagamento = this.tipoPagamentoService.findById(tipoPagamento.getId()).getStatus();
@@ -469,6 +560,11 @@ public class ExtractNFe {
             }
         }
         return statusConta;
+    }
+
+    private Date converterToDateSimple(String data) throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        return simpleDateFormat.parse(data);
     }
 
     private Date converterToDate(String data) throws ParseException {

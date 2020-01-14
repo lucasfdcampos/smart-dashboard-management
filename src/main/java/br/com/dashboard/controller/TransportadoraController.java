@@ -50,7 +50,7 @@ public class TransportadoraController {
     }
 
     @DeleteMapping(value = "/{id}")
-    ResponseEntity<String> deleteTransportadora(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteTransportadora(@PathVariable("id") Long id) {
         this.transportadoraService.delete(id);
         return new ResponseEntity<String>("DELETED", HttpStatus.OK);
     }

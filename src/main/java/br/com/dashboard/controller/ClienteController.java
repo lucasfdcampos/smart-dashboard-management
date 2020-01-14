@@ -49,7 +49,7 @@ public class ClienteController {
     }
 
     @DeleteMapping(value = "/{id}")
-    ResponseEntity<String> deleteCliente(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteCliente(@PathVariable("id") Long id) {
         this.clienteService.delete(id);
         return new ResponseEntity<String>("DELETED", HttpStatus.OK);
     }

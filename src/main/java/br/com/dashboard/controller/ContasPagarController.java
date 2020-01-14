@@ -37,7 +37,7 @@ public class ContasPagarController {
     }
 
     @DeleteMapping(value = "/{id}")
-    ResponseEntity<String> deleteContaPagar(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteContaPagar(@PathVariable("id") Long id) {
         this.contasPagarService.delete(id);
         return new ResponseEntity<String>("DELETED", HttpStatus.OK);
     }

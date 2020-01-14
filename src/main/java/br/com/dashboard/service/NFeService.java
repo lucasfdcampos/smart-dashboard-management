@@ -1,6 +1,8 @@
 package br.com.dashboard.service;
 
 import br.com.dashboard.model.NFe;
+import br.com.dashboard.model.NFeDuplicatas;
+import br.com.dashboard.model.NFeProdutos;
 import br.com.dashboard.repository.NFeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -10,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.Iterator;
 import java.util.List;
 
 @Service
@@ -18,6 +21,12 @@ public class NFeService {
 
     @Autowired
     private NFeRepository nFeRepository;
+
+    @Autowired
+    private NFeProdutosService nFeProdutosService;
+
+    @Autowired
+    private NFeDuplicatasService nFeDuplicatasService;
 
     public NFeService() {
         super();
@@ -31,16 +40,20 @@ public class NFeService {
     public void save(NFe nFe) {
         this.nFeRepository.save(nFe);
 
-        if (nFe.getNfeProdutos() != null) {
-            nFe.getNfeProdutos()
-                    .parallelStream()
-                    .forEach(nFe::addProduto);
+        Iterator<NFeProdutos> nFeProdutosIterator = nFe.getNfeProdutos().iterator();
+        while (nFeProdutosIterator.hasNext()) {
+            NFeProdutos nFeProdutos = nFeProdutosIterator.next();
+            nFeProdutos.setNfe(nFe);
+
+            nFeProdutosService.save(nFe.getId(), nFeProdutos);
         }
 
-        if (nFe.getNfeDuplicatas() != null) {
-            nFe.getNfeDuplicatas()
-                    .parallelStream()
-                    .forEach(nFe::addDuplicata);
+        Iterator<NFeDuplicatas> nFeDuplicatasIterator = nFe.getNfeDuplicatas().iterator();
+        while (nFeDuplicatasIterator.hasNext()) {
+            NFeDuplicatas nFeDuplicatas = nFeDuplicatasIterator.next();
+            nFeDuplicatas.setNfe(nFe);
+
+            nFeDuplicatasService.save(nFe.getId(), nFeDuplicatas);
         }
     }
 

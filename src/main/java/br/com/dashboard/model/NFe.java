@@ -275,9 +275,9 @@ public class NFe implements Serializable {
     public String toString() {
         return "NFe [id=" + id + ", chave=" + chave + ", codigo=" + codigo + ", numero=" + numero + ", tipo=" + tipo +
                 ", serie=" + serie + ", dataEmissao=" + dataEmissao + ", naturezaOperacao=" + naturezaOperacao +
-                ", finalidadeEmissao=" + finalidadeEmissao + ", cliente=" + cliente + ", nfeProdutos=" + nfeProdutos +
-                ", nfeDuplicatas=" + nfeDuplicatas + ", valorProdutos=" + valorProdutos +
-                ", valorDesconto=" + valorDesconto + ", valorLiquido=" + valorLiquido + ", valorTotal=" + valorTotal +
+                ", finalidadeEmissao=" + finalidadeEmissao + ", cliente=" + cliente +
+                ", valorProdutos=" + valorProdutos + ", valorDesconto=" + valorDesconto +
+                ", valorLiquido=" + valorLiquido + ", valorTotal=" + valorTotal +
                 ", transportadora=" + transportadora + "]";
     }
 }

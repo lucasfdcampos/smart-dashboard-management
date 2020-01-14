@@ -37,7 +37,7 @@ public class ContasReceberController {
     }
 
     @DeleteMapping(value = "/{id}")
-    ResponseEntity<String> deleteContaReceber(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteContaReceber(@PathVariable("id") Long id) {
         this.contasReceberService.delete(id);
         return new ResponseEntity<String>("DELETED", HttpStatus.OK);
     }

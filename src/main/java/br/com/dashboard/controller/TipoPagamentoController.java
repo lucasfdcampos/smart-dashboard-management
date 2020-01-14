@@ -43,7 +43,7 @@ public class TipoPagamentoController {
     }
 
     @DeleteMapping(value = "/{id}")
-    ResponseEntity<String> deleteTipoPagamento(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteTipoPagamento(@PathVariable("id") Long id) {
         this.tipoPagamentoService.delete(id);
         return new ResponseEntity<String>("DELETED", HttpStatus.OK);
     }

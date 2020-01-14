@@ -49,7 +49,7 @@ public class NFeController {
     }
 
     @DeleteMapping(value = "/{id}")
-    ResponseEntity<String> deleteNFe(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteNFe(@PathVariable("id") Long id) {
         this.nFeService.delete(id);
         return new ResponseEntity<String>("DELETED", HttpStatus.OK);
     }

@@ -49,7 +49,7 @@ public class FornecedorController {
     }
 
     @DeleteMapping(value = "/{id}")
-    ResponseEntity<String> deleteFornecedor(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteFornecedor(@PathVariable("id") Long id) {
         this.fornecedorService.delete(id);
         return new ResponseEntity<String>("DELETED", HttpStatus.OK);
     }

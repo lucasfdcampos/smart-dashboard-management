@@ -43,7 +43,7 @@ public class MunicipioController {
     }
 
     @DeleteMapping(value = "/{codigo}")
-    ResponseEntity<String> deleteMunicipio(@PathVariable("codigo") String codigo) {
+    public ResponseEntity<String> deleteMunicipio(@PathVariable("codigo") String codigo) {
         try {
             this.municipioService.delete(codigo);
             return new ResponseEntity<String>("DELETED", HttpStatus.OK);
