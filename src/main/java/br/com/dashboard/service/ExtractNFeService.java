@@ -28,6 +28,8 @@ public class ExtractNFeService {
 
     private TNfeProc xNFe;
 
+    private static final String cnpjEmissor = "33564743000143";
+
     @Autowired
     private NFeService nFeService;
 
@@ -48,6 +50,9 @@ public class ExtractNFeService {
 
     @Autowired
     private ContasReceberService contasReceberService;
+
+    @Autowired
+    private FornecedorService fornecedorService;
 
     public ExtractNFeService() {
     }
@@ -142,14 +147,13 @@ public class ExtractNFeService {
     }
 
     /**
-     * Método para validar se a NFe é da própria empresa emissora.
-     * Verifica o CNPJ do emissor e da Chave NFe.
+     * Método para validar se a NFe é da própria empresa emissora ou para a própria empresa.
+     * Verifica o CNPJ do emissor/destinatário.
      */
-    private boolean validarEmissorNFe(String cnpj, String chave) {
+    private boolean validarEmissorNFe(String cnpj) {
         boolean valid = false;
-        String cnpjEmissor = "33564743000143";
 
-        if ((cnpjEmissor.equals(cnpj)) && (cnpjEmissor.equals(chave.substring(6, 20)))) {
+        if (cnpj.equals(ExtractNFeService.cnpjEmissor)) {
             valid = true;
         }
         return valid;
@@ -157,8 +161,8 @@ public class ExtractNFeService {
 
     private void persistirDados() throws ParseException {
 
-        if (validarEmissorNFe(xNFe.getNFe().getInfNFe().getEmit().getCNPJ(),
-                xNFe.getProtNFe().getInfProt().getChNFe())) {
+        // NFe saida
+        if (validarEmissorNFe(xNFe.getNFe().getInfNFe().getEmit().getCNPJ().trim())) {
 
             NFe nFe = null;
             try {
@@ -168,7 +172,7 @@ public class ExtractNFeService {
             if (nFe == null || nFe.getChave().isEmpty()) {
 
                 // -- Municipio
-                Municipio municipio = persistirMunicipio();
+                Municipio municipio = persistirMunicipioDestinatario();
                 System.out.println(municipio);
 
                 // - Transportadora
@@ -202,16 +206,59 @@ public class ExtractNFeService {
                 // -- Contas a Receber
                 persistirContasReceber(nFe, cliente, tipoPagamento);
 
-                System.out.println("\nPERSISTIDO NFE: " + nFe.getNumero());
+                System.out.println("\nPERSISTIDO NFE SAIDA: " + nFe.getNumero());
             }
+
+            // NFe entrada
+        } else if(validarEmissorNFe(xNFe.getNFe().getInfNFe().getDest().getCNPJ().trim())) {
+
+
+
+
+            // -- Municipio
+            Municipio municipio = persistirMunicipioEmitente();
+            System.out.println(municipio);
+
+            // - Transportadora
+            Transportadora transportadora = persistirTransportadora();
+            System.out.println(transportadora);
+
+            // -- Fornecedor
+            Fornecedor fornecedor = persistirFornecedor(municipio);
+            System.out.println(fornecedor);
+
+
+
+
+
+
         }
     }
 
-    private Municipio persistirMunicipio() {
+    private Municipio persistirMunicipioDestinatario() {
         Municipio municipio = new Municipio();
         municipio.setCodigo(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getCMun().trim());
         municipio.setNome(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getXMun().toUpperCase().trim());
         municipio.setUf(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getUF().value());
+
+        Municipio searchMunicipio = null;
+        try {
+            searchMunicipio = this.municipioService.findByCodigo(municipio.getCodigo());
+        } catch (Exception e) { }
+
+        if (searchMunicipio == null) {
+            this.municipioService.save(municipio);
+        } else {
+            this.municipioService.update(searchMunicipio.getCodigo(), municipio);
+        }
+        return municipio;
+    }
+
+    private Municipio persistirMunicipioEmitente() {
+        Municipio municipio = new Municipio();
+        municipio.setCodigo(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getCMun().trim());
+        municipio.setNome(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getXMun().toUpperCase().trim());
+        municipio.setUf(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getUF().value());
 
         Municipio searchMunicipio = null;
         try {
@@ -283,6 +330,37 @@ public class ExtractNFeService {
             this.clienteService.update(searchCliente.getId(), cliente);
         }
         return cliente;
+    }
+
+    private Fornecedor persistirFornecedor(Municipio municipio) {
+        Municipio searchMunicipio = null;
+        try {
+            searchMunicipio = this.municipioService.findByCodigo(municipio.getCodigo());
+        } catch (Exception e) { }
+
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setNome(xNFe.getNFe().getInfNFe().getEmit().getXNome().toUpperCase().trim());
+        fornecedor.setCnpj(xNFe.getNFe().getInfNFe().getEmit().getCNPJ().trim());
+        fornecedor.setIe(xNFe.getNFe().getInfNFe().getEmit().getIE().trim());
+        fornecedor.setEndereco(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getXLgr().toUpperCase().trim());
+        fornecedor.setNumero(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getNro().toUpperCase().trim());
+        fornecedor.setBairro(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getXBairro().toUpperCase().trim());
+        fornecedor.setMunicipio(searchMunicipio);
+        fornecedor.setUf(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getUF().value());
+        fornecedor.setCep(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getCEP().trim());
+        fornecedor.setFone(xNFe.getNFe().getInfNFe().getEmit().getEnderEmit().getFone().trim());
+
+        Fornecedor searchFornecedor = null;
+        try {
+            searchFornecedor = this.fornecedorService.findByCnpj(fornecedor.getCnpj());
+        } catch (Exception e) { }
+
+        if (searchFornecedor == null) {
+            this.fornecedorService.save(fornecedor);
+        } else {
+            this.fornecedorService.update(searchFornecedor.getId(), fornecedor);
+        }
+        return fornecedor;
     }
 
     private List<NFeProdutos> persistirNFeProdutos() {

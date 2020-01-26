@@ -3,24 +3,23 @@ package br.com.dashboard.model;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 import java.util.Date;
 
 @Entity
-@Table(name = "nfe_duplicatas")
-public class NFeDuplicatas implements Serializable {
+@Table(name = "nfe_entrada_duplicatas")
+public class NFeEntradaDuplicatas {
 
     private static final long serialVersionUID = 1L;
 
-    public NFeDuplicatas() {
+    public NFeEntradaDuplicatas() {
         super();
     }
 
-    public NFeDuplicatas(Long id, NFe nfe, @NotNull @Size(max = 3) String numero, Date dataVencimento,
-                         @NotNull Double valor) {
+    public NFeEntradaDuplicatas(Long id, NFeEntrada nfeEntrada, @NotNull @Size(max = 3) String numero,
+                                Date dataVencimento, @NotNull Double valor) {
         super();
         this.id = id;
-        this.nfe = nfe;
+        this.nfeEntrada = nfeEntrada;
         this.numero = numero;
         this.dataVencimento = dataVencimento;
         this.valor = valor;
@@ -32,8 +31,8 @@ public class NFeDuplicatas implements Serializable {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "nfe")
-    private NFe nfe;
+    @JoinColumn(name = "nfeEntrada")
+    private NFeEntrada nfeEntrada;
 
     @NotNull
     @Size(max = 3)
@@ -56,12 +55,12 @@ public class NFeDuplicatas implements Serializable {
         this.id = id;
     }
 
-    public NFe getNfe() {
-        return nfe;
+    public NFeEntrada getNfeEntrada() {
+        return nfeEntrada;
     }
 
-    public void setNfe(NFe nfe) {
-        this.nfe = nfe;
+    public void setNfeEntrada(NFeEntrada nfeEntrada) {
+        this.nfeEntrada = nfeEntrada;
     }
 
     public String getNumero() {
@@ -90,7 +89,7 @@ public class NFeDuplicatas implements Serializable {
 
     @Override
     public String toString() {
-        return "NfeDuplicatas [id=" + id + ", nfe=" + nfe + ", numero=" + numero +
+        return "NFeEntradaDuplicatas [id=" + id + ", nfeEntrada=" + nfeEntrada + ", numero=" + numero +
                 ", dataVencimento=" + dataVencimento + ", valor=" + valor + "]";
     }
 }

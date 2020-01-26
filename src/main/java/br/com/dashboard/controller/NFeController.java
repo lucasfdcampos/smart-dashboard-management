@@ -75,8 +75,8 @@ public class NFeController {
     @GetMapping(value = "/search")
     @ResponseStatus(HttpStatus.OK)
     public Page<NFe> search(@RequestParam("searchTerm") String searchTerm,
-                                @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                                @RequestParam(value = "size", required = false, defaultValue = "0") int size) {
+                            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                            @RequestParam(value = "size", required = false, defaultValue = "0") int size) {
         return this.nFeService.search(searchTerm, page, size);
     }
 }

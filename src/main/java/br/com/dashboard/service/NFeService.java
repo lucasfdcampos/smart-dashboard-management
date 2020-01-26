@@ -67,8 +67,7 @@ public class NFeService {
     }
 
     public NFe findById(Long id) {
-        NFe nFe = this.nFeRepository.getOne(id);
-        return nFe;
+        return this.nFeRepository.getOne(id);
     }
 
     public NFe findByChave(String chave) {

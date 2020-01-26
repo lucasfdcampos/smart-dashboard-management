@@ -17,7 +17,7 @@ public class NFeProdutosController {
     @Autowired
     private NFeProdutosService nFeProdutosService;
 
-    @GetMapping(value = "/{id}")
+    @GetMapping(value = "/{idNFeProduto}")
     @ResponseStatus(HttpStatus.OK)
     public NFeProdutos getNFeProduto(@PathVariable("idNFe") Long idNFe,
                                      @PathVariable("idNFeProduto") Long idNFeProduto) {

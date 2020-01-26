@@ -17,7 +17,7 @@ public class NFeDuplicatasController {
     @Autowired
     private NFeDuplicatasService nFeDuplicatasService;
 
-    @GetMapping(value = "/{id}")
+    @GetMapping(value = "/{idNFeDuplicata}")
     @ResponseStatus(HttpStatus.OK)
     public NFeDuplicatas getNFeDuplicata(@PathVariable("idNFe") Long idNFe,
                                          @PathVariable("idNFeDuplicata") Long idNFeDuplicata) {

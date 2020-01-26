@@ -16,7 +16,7 @@ public class ContasPagar implements Serializable {
         super();
     }
 
-    public ContasPagar(Long id, @NotNull @Size(max = 9) String documento, @NotNull Cliente fornecedor,
+    public ContasPagar(Long id, @NotNull @Size(max = 9) String documento, @NotNull Fornecedor fornecedor,
                        @NotNull String descricao, @NotNull TipoPagamento tipoPagamento, Date dataVencimento,
                        @NotNull Double valor, Date dataPagamento, Double valorPago, StatusConta status) {
         super();
@@ -45,7 +45,7 @@ public class ContasPagar implements Serializable {
     @NotNull
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "fornecedor", referencedColumnName = "id")
-    private Cliente fornecedor;
+    private Fornecedor fornecedor;
 
     @NotNull
     @Column(nullable = false, name = "descricao")
@@ -91,11 +91,11 @@ public class ContasPagar implements Serializable {
         this.documento = documento;
     }
 
-    public Cliente getFornecedor() {
+    public Fornecedor getFornecedor() {
         return fornecedor;
     }
 
-    public void setFornecedor(Cliente fornecedor) {
+    public void setFornecedor(Fornecedor fornecedor) {
         this.fornecedor = fornecedor;
     }
 
