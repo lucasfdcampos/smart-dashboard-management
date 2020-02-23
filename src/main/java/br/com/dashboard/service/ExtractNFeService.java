@@ -54,6 +54,12 @@ public class ExtractNFeService {
     @Autowired
     private FornecedorService fornecedorService;
 
+    @Autowired
+    private NFeEntradaService nFeEntradaService;
+
+    @Autowired
+    private ContasPagarService contasPagarService;
+
     public ExtractNFeService() {
     }
 
@@ -114,8 +120,11 @@ public class ExtractNFeService {
         xNFe = getNfeProc(xml);
 
         if (xNFe != null) {
-            System.out.println("#\nCHAVE: " + xNFe.getProtNFe().getInfProt().getChNFe().trim());
-            persistirDados();
+
+            if (validarNFe()) {
+                System.out.println("#\nCHAVE: " + xNFe.getProtNFe().getInfProt().getChNFe().trim());
+                persistirDados();
+            }
         }
     }
 
@@ -144,6 +153,13 @@ public class ExtractNFeService {
         } catch (JAXBException e) {
             throw new Exception(e.toString());
         }
+    }
+
+    /**
+     * Método para validar se a NFe é modelo 55.
+     */
+    private boolean validarNFe() {
+        return (xNFe.getNFe().getInfNFe().getIde().getMod().trim().equals("55"));
     }
 
     /**
@@ -212,26 +228,50 @@ public class ExtractNFeService {
             // NFe entrada
         } else if(validarEmissorNFe(xNFe.getNFe().getInfNFe().getDest().getCNPJ().trim())) {
 
+            NFeEntrada nFeEntrada = null;
+            try {
+                nFeEntrada = this.nFeEntradaService.findByChave(xNFe.getProtNFe().getInfProt().getChNFe().trim());
+            } catch (Exception e) { }
 
+            if (nFeEntrada == null || nFeEntrada.getChave().isEmpty()) {
 
+                // -- Municipio
+                Municipio municipio = persistirMunicipioEmitente();
+                System.out.println(municipio);
 
-            // -- Municipio
-            Municipio municipio = persistirMunicipioEmitente();
-            System.out.println(municipio);
+                // - Transportadora
+                Transportadora transportadora = persistirTransportadora();
+                System.out.println(transportadora);
 
-            // - Transportadora
-            Transportadora transportadora = persistirTransportadora();
-            System.out.println(transportadora);
+                // -- Fornecedor
+                Fornecedor fornecedor = persistirFornecedor(municipio);
+                System.out.println(fornecedor);
 
-            // -- Fornecedor
-            Fornecedor fornecedor = persistirFornecedor(municipio);
-            System.out.println(fornecedor);
+                // -- Produtos
+                List<NFeEntradaProdutos> nFeEntradaProdutos = persistirNFeEntradaProdutos();
+                for (NFeEntradaProdutos nFeEntradaProduto : nFeEntradaProdutos) {
+                    System.out.println(nFeEntradaProduto);
+                }
 
+                // -- Duplicatas
+                List<NFeEntradaDuplicatas> nFeEntradaDuplicatas = persistirNFeEntradaDuplicatas();
+                for (NFeEntradaDuplicatas nFeEntradaDuplicata : nFeEntradaDuplicatas) {
+                    System.out.println(nFeEntradaDuplicata);
+                }
 
+                // -- NFe Entrada
+                nFeEntrada = persistirNFeEntrada(fornecedor, transportadora, nFeEntradaProdutos, nFeEntradaDuplicatas);
+                System.out.println(nFeEntrada);
 
+                // -- Tipo Pagamento
+                TipoPagamento tipoPagamento = persistirTipoPagamento();
+                System.out.println(tipoPagamento);
 
+                // -- Contas a Pagar
+                persistirContasPagar(nFeEntrada, fornecedor, tipoPagamento);
 
-
+                System.out.println("\nPERSISTIDO NFE ENTRADA: " + nFeEntrada.getNumero());
+            }
         }
     }
 
@@ -481,8 +521,8 @@ public class ExtractNFeService {
         // Modelo atual [sempre com valor 99-Outros]
         if (detPag.equals("99")) {
 
+            TipoPagamento searchTipoPagamento = null;
             if (xNFe.getNFe().getInfNFe().getCobr() == null) {
-                TipoPagamento searchTipoPagamento = null;
                 try {
                     searchTipoPagamento = this.tipoPagamentoService.findByDescricao("DEPOSITO");
                 } catch (Exception e) { }
@@ -498,7 +538,6 @@ public class ExtractNFeService {
                 }
 
             } else {
-                TipoPagamento searchTipoPagamento = null;
                 try {
                     searchTipoPagamento = this.tipoPagamentoService.findByDescricao("BOLETO");
                 } catch (Exception e) { }
@@ -553,6 +592,7 @@ public class ExtractNFeService {
                     descricao = "VALE COMBUSTIVEL";
                     statusPagamento = StatusPagamento.VISTA;
                     break;
+                case "14":
                 case "15":
                     descricao = "BOLETO";
                     statusPagamento = StatusPagamento.PRAZO;
@@ -572,6 +612,7 @@ public class ExtractNFeService {
                 tipoPagamento.setDescricao(descricao);
                 tipoPagamento.setStatus(statusPagamento);
                 this.tipoPagamentoService.save(tipoPagamento);
+
             } else {
                 tipoPagamento = searchTipoPagamento;
             }
@@ -638,6 +679,129 @@ public class ExtractNFeService {
             }
         }
         return statusConta;
+    }
+
+    private List<NFeEntradaProdutos> persistirNFeEntradaProdutos() {
+        List<NFeEntradaProdutos> nFeEntradaProdutos = new ArrayList<>();
+
+        for (int index = 0; index < xNFe.getNFe().getInfNFe().getDet().size(); index++) {
+            NFeEntradaProdutos nFeEntradaProduto = new NFeEntradaProdutos();
+            nFeEntradaProduto.setDescricaoProduto(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getXProd().toUpperCase().trim());
+            nFeEntradaProduto.setNcm(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getNCM().trim());
+            nFeEntradaProduto.setCfop(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getCFOP().trim());
+            nFeEntradaProduto.setUnidade(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getUCom().toUpperCase().trim());
+            nFeEntradaProduto.setQuantidade(converterToDouble(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getQCom()));
+            nFeEntradaProduto.setValorUnitario(converterToDouble(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getVUnCom()));
+            nFeEntradaProduto.setValorTotal(converterToDouble(xNFe.getNFe().getInfNFe().getDet().get(index).getProd().getVProd()));
+            nFeEntradaProdutos.add(nFeEntradaProduto);
+        }
+        return nFeEntradaProdutos;
+    }
+
+    private List<NFeEntradaDuplicatas> persistirNFeEntradaDuplicatas() throws ParseException {
+        List<NFeEntradaDuplicatas> nFeEntradaDuplicatas = new ArrayList<>();
+
+        if (xNFe.getNFe().getInfNFe().getCobr() == null) {
+            NFeEntradaDuplicatas nFeEntradaDuplicata = new NFeEntradaDuplicatas();
+            nFeEntradaDuplicata.setNumero("001");
+            nFeEntradaDuplicata.setDataVencimento(converterToDate(xNFe.getNFe().getInfNFe().getIde().getDhEmi()));
+            nFeEntradaDuplicata.setValor(converterToDouble(xNFe.getNFe().getInfNFe().getPag().get(0).getDetPag().getVPag()));
+            nFeEntradaDuplicatas.add(nFeEntradaDuplicata);
+
+        } else {
+            for (int index = 0; index < xNFe.getNFe().getInfNFe().getCobr().getDup().size(); index++) {
+                NFeEntradaDuplicatas nFeEntradaDuplicata = new NFeEntradaDuplicatas();
+                nFeEntradaDuplicata.setNumero(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getNDup().trim());
+                nFeEntradaDuplicata.setDataVencimento(converterToDateSimple(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getDVenc()));
+                nFeEntradaDuplicata.setValor(converterToDouble(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getVDup()));
+                nFeEntradaDuplicatas.add(nFeEntradaDuplicata);
+            }
+        }
+        return nFeEntradaDuplicatas;
+    }
+
+    private NFeEntrada persistirNFeEntrada(Fornecedor fornecedor, Transportadora transportadora,
+                                           List<NFeEntradaProdutos> nFeEntradaProdutos,
+                                           List<NFeEntradaDuplicatas> nFeEntradaDuplicatas) throws ParseException {
+        Fornecedor searchFornecedor = null;
+        try {
+            searchFornecedor = this.fornecedorService.findById(fornecedor.getId());
+        } catch (Exception e) { }
+
+        Transportadora searchTransportadora = null;
+        try {
+            searchTransportadora = this.transportadoraService.findById(transportadora.getId());
+        } catch (Exception e) { }
+
+        Double valorLiquido = 0d;
+        if (xNFe.getNFe().getInfNFe().getCobr() == null) {
+            valorLiquido = converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVNF());
+        } else {
+            valorLiquido = converterToDouble(xNFe.getNFe().getInfNFe().getCobr().getFat().getVLiq());
+        }
+
+        NFeEntrada nFeEntrada = new NFeEntrada();
+        nFeEntrada.setChave(xNFe.getProtNFe().getInfProt().getChNFe().trim());
+        nFeEntrada.setCodigo(xNFe.getNFe().getInfNFe().getIde().getCNF().trim());
+        nFeEntrada.setNumero(xNFe.getNFe().getInfNFe().getIde().getNNF().trim());
+        nFeEntrada.setTipo(xNFe.getNFe().getInfNFe().getIde().getTpNF().trim());
+        nFeEntrada.setSerie(xNFe.getNFe().getInfNFe().getIde().getSerie().trim());
+        nFeEntrada.setDataEmissao(converterToDate(xNFe.getNFe().getInfNFe().getIde().getDhEmi()));
+        nFeEntrada.setDataEntrada(new Date());
+        nFeEntrada.setNaturezaOperacao(xNFe.getNFe().getInfNFe().getIde().getNatOp().toUpperCase().trim());
+        nFeEntrada.setFinalidadeEmissao(xNFe.getNFe().getInfNFe().getIde().getFinNFe().trim());
+        nFeEntrada.setFornecedor(searchFornecedor);
+        nFeEntrada.setNfeEntradaProdutos(nFeEntradaProdutos);
+        nFeEntrada.setNfeEntradaDuplicatas(nFeEntradaDuplicatas);
+        nFeEntrada.setValorProdutos(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVProd()));
+        nFeEntrada.setValorDesconto(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVDesc()));
+        nFeEntrada.setValorLiquido(valorLiquido);
+        nFeEntrada.setValorTotal(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVNF()));
+        nFeEntrada.setTransportadora(searchTransportadora);
+        this.nFeEntradaService.save(nFeEntrada);
+        return nFeEntrada;
+    }
+
+    private void persistirContasPagar(NFeEntrada nFeEntrada, Fornecedor fornecedor,
+                                      TipoPagamento tipoPagamento) throws ParseException {
+        StatusConta statusConta = verificarStatusConta(tipoPagamento);
+
+        Fornecedor searchFornecedor = null;
+        try {
+            searchFornecedor = this.fornecedorService.findById(fornecedor.getId());
+        } catch (Exception e) { }
+
+        TipoPagamento searchTipoPagamento = null;
+        try {
+            searchTipoPagamento = this.tipoPagamentoService.findById(tipoPagamento.getId());
+        } catch (Exception e) { }
+
+        if (xNFe.getNFe().getInfNFe().getCobr() == null) {
+            ContasPagar contasPagar = new ContasPagar();
+            contasPagar.setDocumento(nFeEntrada.getNumero().trim());
+            contasPagar.setFornecedor(searchFornecedor);
+            contasPagar.setDescricao("NFe: " + nFeEntrada.getNumero().trim() + " - Fornecedor: " + searchFornecedor.getNome().trim());
+            contasPagar.setTipoPagamento(searchTipoPagamento);
+            contasPagar.setDataVencimento(converterToDate(xNFe.getNFe().getInfNFe().getIde().getDhEmi()));
+            contasPagar.setValor(converterToDouble(xNFe.getNFe().getInfNFe().getTotal().getICMSTot().getVNF()));
+            contasPagar.setDataPagamento(contasPagar.getDataVencimento());
+            contasPagar.setValorPago(contasPagar.getValor());
+            contasPagar.setStatus(statusConta);
+            this.contasPagarService.save(contasPagar);
+
+        } else {
+            for (int index = 0; index < xNFe.getNFe().getInfNFe().getCobr().getDup().size(); index++) {
+                ContasPagar contasPagar = new ContasPagar();
+                contasPagar.setDocumento(nFeEntrada.getNumero().trim());
+                contasPagar.setFornecedor(searchFornecedor);
+                contasPagar.setDescricao("NFe: " + nFeEntrada.getNumero().trim() + " - Fornecedor: " + searchFornecedor.getNome().trim());
+                contasPagar.setTipoPagamento(searchTipoPagamento);
+                contasPagar.setDataVencimento(converterToDateSimple(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getDVenc()));
+                contasPagar.setValor(converterToDouble(xNFe.getNFe().getInfNFe().getCobr().getDup().get(index).getVDup()));
+                contasPagar.setStatus(statusConta);
+                this.contasPagarService.save(contasPagar);
+            }
+        }
     }
 
     private Date converterToDateSimple(String data) throws ParseException {
