@@ -18,5 +18,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     Cliente findByCnpj(String cnpj);
 
     @Query("from Cliente c where lower(c.nome) like %:searchTerm%")
-    Page<Cliente> search(@Param("searchTerm") String searchTerm, Pageable pageable);
+    Page<Cliente> searchNome(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("from Cliente c where c.cnpj like %:searchTerm%")
+    Page<Cliente> searchCnpj(@Param("searchTerm") String searchTerm, Pageable pageable);
 }

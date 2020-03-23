@@ -314,6 +314,12 @@ public class ExtractNFeService {
     }
 
     private Transportadora persistirTransportadora() {
+
+        // 9 - Sem Ocorrencia de Transporte
+        if (xNFe.getNFe().getInfNFe().getTransp().getModFrete().equals("9")) {
+            return null;
+        }
+
         String endereco = xNFe.getNFe().getInfNFe().getTransp().getTransporta().getXEnder()
                 .replace(xNFe.getNFe().getInfNFe().getTransp().getTransporta().getXMun().trim() +
                                 xNFe.getNFe().getInfNFe().getTransp().getTransporta().getUF().value().trim(),
@@ -346,10 +352,22 @@ public class ExtractNFeService {
             searchMunicipio = this.municipioService.findByCodigo(municipio.getCodigo());
         } catch (Exception e) { }
 
+        String cnpj = "";
+        if (xNFe.getNFe().getInfNFe().getDest().getCNPJ() == null) {
+            cnpj = xNFe.getNFe().getInfNFe().getDest().getCPF().trim();
+        } else {
+            cnpj = xNFe.getNFe().getInfNFe().getDest().getCNPJ().trim();
+        }
+
+        String ie = "";
+        if (xNFe.getNFe().getInfNFe().getDest().getIE() != null) {
+            ie = xNFe.getNFe().getInfNFe().getDest().getIE().trim();
+        }
+
         Cliente cliente = new Cliente();
         cliente.setNome(xNFe.getNFe().getInfNFe().getDest().getXNome().toUpperCase().trim());
-        cliente.setCnpj(xNFe.getNFe().getInfNFe().getDest().getCNPJ().trim());
-        cliente.setIe(xNFe.getNFe().getInfNFe().getDest().getIE().trim());
+        cliente.setCnpj(cnpj.trim());
+        cliente.setIe(ie.trim());
         cliente.setEndereco(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getXLgr().toUpperCase().trim());
         cliente.setNumero(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getNro().toUpperCase().trim());
         cliente.setBairro(xNFe.getNFe().getInfNFe().getDest().getEnderDest().getXBairro().toUpperCase().trim());
@@ -481,9 +499,12 @@ public class ExtractNFeService {
         } catch (Exception e) { }
 
         Transportadora searchTransportadora = null;
-        try {
-            searchTransportadora = this.transportadoraService.findById(transportadora.getId());
-        } catch (Exception e) { }
+        if (transportadora != null) {
+            try {
+                searchTransportadora = this.transportadoraService.findById(transportadora.getId());
+            } catch (Exception e) {
+            }
+        }
 
         Double valorLiquido = 0d;
         if (xNFe.getNFe().getInfNFe().getCobr() == null) {

@@ -1,5 +1,7 @@
 package br.com.dashboard.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -7,6 +9,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "clientes")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Cliente implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -16,7 +19,7 @@ public class Cliente implements Serializable {
     }
 
     public Cliente(Long id, @NotNull String nome, @NotNull @Size(max = 14) String cnpj,
-                   @NotNull @Size(max = 12) String ie, @NotNull String endereco, @Size(max = 10) String numero,
+                   @Size(max = 15) String ie, @NotNull String endereco, @Size(max = 10) String numero,
                    @NotNull String bairro, @NotNull Municipio municipio, @NotNull @Size(max = 2) String uf,
                    @NotNull String cep, String fone, String celular, String email) {
         super();
@@ -49,9 +52,8 @@ public class Cliente implements Serializable {
     @Column(nullable = false, length = 14, name = "cnpj")
     private String cnpj;
 
-    @NotNull
-    @Size(max = 12)
-    @Column(nullable = false, length = 12, name = "ie")
+    @Size(max = 15)
+    @Column(nullable = false, length = 15, name = "ie")
     private String ie;
 
     @NotNull

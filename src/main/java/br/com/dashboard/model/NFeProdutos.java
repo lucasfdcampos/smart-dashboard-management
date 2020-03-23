@@ -16,7 +16,7 @@ public class NFeProdutos implements Serializable {
     }
 
     public NFeProdutos(Long id, NFe nfe, @NotNull Produto produto, @Size(max = 8) String ncm,
-                       @Size(max = 4) String cfop, @Size(max = 1) String unidade, @NotNull Double quantidade,
+                       @Size(max = 4) String cfop, @Size(max = 2) String unidade, @NotNull Double quantidade,
                        @NotNull Double valorUnitario, @NotNull Double valorTotal) {
         super();
         this.id = id;
@@ -52,8 +52,8 @@ public class NFeProdutos implements Serializable {
     @Column(length = 4, name = "cfop")
     private String cfop;
 
-    @Size(max = 1)
-    @Column(length = 1, name = "unidade")
+    @Size(max = 2)
+    @Column(length = 2, name = "unidade")
     private String unidade;
 
     @NotNull

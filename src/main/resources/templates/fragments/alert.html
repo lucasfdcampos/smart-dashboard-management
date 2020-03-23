@@ -1,0 +1,13 @@
+<div th:class="${#strings.equals(mensagem, 'OK')} ? 'alert alert-info alert-dismissible fade show' : 'alert alert-danger alert-dismissible fade show'"
+     role="alert" th:if="${!#strings.isEmpty(mensagem)}">
+
+    <i th:if="${!#strings.isEmpty(mensagem)}"
+       th:class="${#strings.equals(mensagem, 'OK')} ? 'fas fa-check' : 'fas fa-exclamation-triangle'"></i>
+
+    <span th:if="${!#strings.isEmpty(mensagem)}"
+          th:text="${#strings.equals(mensagem, 'OK')} ? 'Importação NFe(s) OK' : ${mensagem}"></span>
+
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>

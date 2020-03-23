@@ -25,7 +25,7 @@ public class NFeEntrada implements Serializable {
                       @NotNull Fornecedor fornecedor, List<NFeEntradaProdutos> nfeEntradaProdutos,
                       List<NFeEntradaDuplicatas> nfeEntradaDuplicatas, @NotNull Double valorProdutos,
                       @NotNull Double valorDesconto, @NotNull Double valorLiquido, @NotNull Double valorTotal,
-                      @NotNull Transportadora transportadora) {
+                      Transportadora transportadora) {
         super();
         this.id = id;
         this.chave = chave;
@@ -120,7 +120,6 @@ public class NFeEntrada implements Serializable {
     @Column(nullable = false, name = "valor_total")
     private Double valorTotal;
 
-    @NotNull
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "transportadora", referencedColumnName = "id")
     private Transportadora transportadora;
