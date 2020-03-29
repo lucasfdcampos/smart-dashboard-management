@@ -19,6 +19,8 @@ public class HomeController {
     public ModelAndView index(ModelMap model) {
         // Conteudo da pagina
         model.addAttribute("conteudo", "dashboard");
+
+        // -- Cards --
         // Caixa
         model.addAttribute("caixa", "20.500,00");
         // Metas
@@ -48,16 +50,19 @@ public class HomeController {
     @RequestMapping(value = "/extract", method = RequestMethod.GET)
     public ModelAndView extract(ModelMap model) {
         String response = "OK";
-        /*
+
         try {
             response = this.extractNFeService.sweepDirectory();
         } catch (Exception e) {
             response = e.toString();
         }
-        */
 
         // Conteudo da pagina
         model.addAttribute("conteudo", "dashboard");
+        // Mensagem alert atualizar NFes
+        model.addAttribute("mensagem", response);
+
+        // -- Cards --
         // Caixa
         model.addAttribute("caixa", "20.500,00");
         // Metas
@@ -80,9 +85,6 @@ public class HomeController {
         model.addAttribute("vendas_mes", "23.300,00");
         // Vendas (Dia)
         model.addAttribute("vendas_dia", "1.350,00");
-
-        // Mensagem alert atualizar NFes
-        model.addAttribute("mensagem", response);
 
         return new ModelAndView("index2", model);
     }

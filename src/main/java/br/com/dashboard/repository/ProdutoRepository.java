@@ -11,6 +11,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
+    @Query("from Produto p where lower(p.codigoEmpresa) like %:searchTerm%")
+    Page<Produto> searchCodigo(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("from Produto p where lower(p.descricao) like %:searchTerm%")
+    Page<Produto> searchDescricao(@Param("searchTerm") String searchTerm, Pageable pageable);
+
     @Query("select p from Produto p where p.descricao = ?1")
     Produto findByDescricao(String descricao);
 

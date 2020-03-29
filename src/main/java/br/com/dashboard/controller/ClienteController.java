@@ -144,8 +144,6 @@ public class ClienteController {
         return cliente;
     }
 
-
-
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<String> deleteCliente(@PathVariable("id") Long id) {
         this.clienteService.delete(id);

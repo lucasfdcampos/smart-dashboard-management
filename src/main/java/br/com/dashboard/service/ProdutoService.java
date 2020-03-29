@@ -28,6 +28,20 @@ public class ProdutoService {
         this.produtoRepository = produtoRepository;
     }
 
+    public Page<Produto> searchCodigo(String searchTerm, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "codigoEmpresa");
+        return this.produtoRepository.searchCodigo(searchTerm.toLowerCase(), pageRequest);
+    }
+
+    public Page<Produto> searchDescricao(String searchTerm, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "descricao");
+        return this.produtoRepository.searchDescricao(searchTerm.toLowerCase(), pageRequest);
+    }
+
+
+
+
+
     public void save(Produto produto) {
         this.produtoRepository.save(produto);
     }

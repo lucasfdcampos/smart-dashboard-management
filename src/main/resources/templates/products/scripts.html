@@ -1,0 +1,22 @@
+<!-- Bootstrap core JavaScript-->
+<script th:src="@{/vendor/jquery/jquery.min.js}"></script>
+<script th:src="@{/vendor/bootstrap/js/bootstrap.bundle.min.js}"></script>
+
+<!-- View Modal -->
+<script>
+    $(document).ready(function(){
+        $('.vBtn').on('click', function(event){
+            //prevents redirection to blank page with JSON-Task-Object
+            event.preventDefault();
+            var href = $(this).attr('href');
+
+            $.get(href, function(produto){
+                $('.myForm #id').val(produto.id);
+                $('.myForm #codigo').val(produto.codigoEmpresa);
+                $('.myForm #descricao').val(produto.descricao);
+            });
+
+            $('.myForm #viewModal').modal();
+        });
+    });
+</script>
