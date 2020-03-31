@@ -1,0 +1,32 @@
+<!-- Bootstrap core JavaScript-->
+<script th:src="@{/vendor/jquery/jquery.min.js}"></script>
+<script th:src="@{/vendor/bootstrap/js/bootstrap.bundle.min.js}"></script>
+
+<!-- View Modal -->
+<script>
+    $(document).ready(function(){
+        $('.vBtn').on('click', function(event){
+            //prevents redirection to blank page with JSON-Task-Object
+            event.preventDefault();
+            var href = $(this).attr('href');
+
+            $.get(href, function(fornecedor){
+                $('.myForm #id').val(fornecedor.id);
+                $('.myForm #nome').val(fornecedor.nome);
+                $('.myForm #cnpj').val(fornecedor.cnpj);
+                $('.myForm #ie').val(fornecedor.ie);
+                $('.myForm #cep').val(fornecedor.cep);
+                $('.myForm #endereco').val(fornecedor.endereco);
+                $('.myForm #numero').val(fornecedor.numero);
+                $('.myForm #bairro').val(fornecedor.bairro);
+                $('.myForm #municipio').val(fornecedor.municipio.nome);
+                $('.myForm #uf').val(fornecedor.uf);
+                $('.myForm #email').val(fornecedor.email);
+                $('.myForm #fone').val(fornecedor.fone);
+                $('.myForm #celular').val(fornecedor.celular);
+            });
+
+            $('.myForm #viewModal').modal();
+        });
+    });
+</script>
