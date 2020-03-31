@@ -18,5 +18,8 @@ public interface FornecedorRepository extends JpaRepository<Fornecedor, Long> {
     Fornecedor findByCnpj(String cnpj);
 
     @Query("from Fornecedor f where lower(f.nome) like %:searchTerm%")
-    Page<Fornecedor> search(@Param("searchTerm") String searchTerm, Pageable pageable);
+    Page<Fornecedor> searchNome(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("from Fornecedor f where f.cnpj like %:searchTerm%")
+    Page<Fornecedor> searchCnpj(@Param("searchTerm") String searchTerm, Pageable pageable);
 }

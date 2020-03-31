@@ -67,7 +67,7 @@
                                     <td th:text="${t.nome}"></td>
                                     <td th:text="${t.cnpj}"></td>
                                     <td>
-                                        <a class="btn btn-dark vBtn" th:href="@{/transportadora/findOne/(id=${c.id})}"
+                                        <a class="btn btn-dark vBtn" th:href="@{/transportadora/findOne/(id=${t.id})}"
                                            title="Visualizar" data-toggle="tooltip">
                                             <i class="fas fa-eye"></i>
                                         </a>
@@ -81,7 +81,7 @@
                                 <ul class="pagination justify-content-center font-weight-bold">
                                     <li class="page-item" th:classappend="${transportadoras.number eq 0} ? 'disabled'">
                                         <a class="page-link"
-                                           th:href="@{/transportadora/list?page={id}(id=${transportadoras.number lt 2 ? 1 : clientes.number})}"
+                                           th:href="@{/transportadora/list?page={id}(id=${transportadoras.number lt 2 ? 1 : transportadoras.number})}"
                                            aria-label="Previous" title="Anterior" data-toggle="tooltip">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
@@ -122,7 +122,7 @@
 
     </div>
 
-    <th:block th:include="clients/scripts"></th:block>
+    <th:block th:include="shippings/scripts"></th:block>
 
 </div>
 </html>

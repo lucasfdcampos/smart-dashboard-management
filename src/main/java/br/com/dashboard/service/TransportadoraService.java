@@ -28,6 +28,16 @@ public class TransportadoraService {
         this.transportadoraRepository = transportadoraRepository;
     }
 
+    public Page<Transportadora> searchNome(String nome, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "nome");
+        return this.transportadoraRepository.searchNome(nome.toLowerCase(), pageRequest);
+    }
+
+    public Page<Transportadora> searchCnpj(String cnpj, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "cnpj");
+        return this.transportadoraRepository.searchCnpj(cnpj.toLowerCase(), pageRequest);
+    }
+
     public void save(Transportadora transportadora) {
         this.transportadoraRepository.save(transportadora);
     }

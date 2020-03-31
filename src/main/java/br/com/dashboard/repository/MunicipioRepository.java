@@ -14,6 +14,12 @@ public interface MunicipioRepository extends JpaRepository<Municipio, String> {
     @Query("select m from Municipio m where m.codigo = ?1")
     Municipio findByCodigo(String codigo);
 
+    @Query("from Municipio m where lower(m.nome) like %:searchTerm%")
+    Page<Municipio> searchNome(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("from Municipio m where lower(m.codigo) like %:searchTerm%")
+    Page<Municipio> searchCodigo(@Param("searchTerm") String searchTerm, Pageable pageable);
+
     @Query("select m from Municipio m where m.nome = ?1 and m.uf = ?2")
     Municipio findByNomeAndUF(String nome, String uf);
 

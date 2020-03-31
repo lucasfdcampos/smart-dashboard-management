@@ -18,5 +18,11 @@ public interface TransportadoraRepository extends JpaRepository<Transportadora, 
     Transportadora findByCnpj(String cnpj);
 
     @Query("from Transportadora t where lower(t.nome) like %:searchTerm%")
+    Page<Transportadora> searchNome(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("from Transportadora t where lower(t.nome) like %:searchTerm%")
     Page<Transportadora> search(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("from Transportadora t where t.cnpj like %:searchTerm%")
+    Page<Transportadora> searchCnpj(@Param("searchTerm") String searchTerm, Pageable pageable);
 }

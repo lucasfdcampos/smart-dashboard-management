@@ -10,20 +10,20 @@
             event.preventDefault();
             var href = $(this).attr('href');
 
-            $.get(href, function(cliente){
-                $('.myForm #id').val(cliente.id);
-                $('.myForm #nome').val(cliente.nome);
-                $('.myForm #cnpj').val(cliente.cnpj);
-                $('.myForm #ie').val(cliente.ie);
-                $('.myForm #cep').val(cliente.cep);
-                $('.myForm #endereco').val(cliente.endereco);
-                $('.myForm #numero').val(cliente.numero);
-                $('.myForm #bairro').val(cliente.bairro);
-                $('.myForm #municipio').val(cliente.municipio.nome);
-                $('.myForm #uf').val(cliente.uf);
-                $('.myForm #email').val(cliente.email);
-                $('.myForm #fone').val(cliente.fone);
-                $('.myForm #celular').val(cliente.celular);
+            $.get(href, function(fornecedor){
+                $('.myForm #id').val(fornecedor.id);
+                $('.myForm #nome').val(fornecedor.nome);
+                $('.myForm #cnpj').val(fornecedor.cnpj);
+                $('.myForm #ie').val(fornecedor.ie);
+                $('.myForm #cep').val(fornecedor.cep);
+                $('.myForm #endereco').val(fornecedor.endereco);
+                $('.myForm #numero').val(fornecedor.numero);
+                $('.myForm #bairro').val(fornecedor.bairro);
+                $('.myForm #municipio').val(fornecedor.municipio.nome);
+                $('.myForm #uf').val(fornecedor.uf);
+                $('.myForm #email').val(fornecedor.email);
+                $('.myForm #fone').val(fornecedor.fone);
+                $('.myForm #celular').val(fornecedor.celular);
             });
 
             $('.myForm #viewModal').modal();

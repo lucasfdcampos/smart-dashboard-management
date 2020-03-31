@@ -10,14 +10,10 @@
             event.preventDefault();
             var href = $(this).attr('href');
 
-            $.get(href, function(transportadora){
-                $('.myForm #id').val(transportadora.id);
-                $('.myForm #nome').val(transportadora.nome);
-                $('.myForm #cnpj').val(transportadora.cnpj);
-                $('.myForm #ie').val(transportadora.ie);
-                $('.myForm #endereco').val(transportadora.endereco);
-                $('.myForm #municipio').val(transportadora.municipio);
-                $('.myForm #uf').val(transportadora.uf);
+            $.get(href, function(municipio){
+                $('.myForm #codigo').val(municipio.codigo);
+                $('.myForm #nome').val(municipio.nome);
+                $('.myForm #uf').val(municipio.uf);
             });
 
             $('.myForm #viewModal').modal();

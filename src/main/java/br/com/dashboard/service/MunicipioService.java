@@ -48,6 +48,16 @@ public class MunicipioService {
         return this.municipioRepository.findByCodigo(codigo);
     }
 
+    public Page<Municipio> searchNome(String searchTerm, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "nome");
+        return this.municipioRepository.searchNome(searchTerm.toLowerCase(), pageRequest);
+    }
+
+    public Page<Municipio> searchCodigo(String searchTerm, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "codigo");
+        return this.municipioRepository.searchCodigo(searchTerm.toLowerCase(), pageRequest);
+    }
+
     public Municipio findByNomeAndUF(String nome, String uf) {
         return this.municipioRepository.findByNomeAndUF(nome, uf);
     }

@@ -30,7 +30,7 @@ public class ClienteController {
     public ModelAndView listarClientes(ModelMap model, HttpServletRequest request) {
 
         int page = 0; // default page number is 0 (yes it is weird)
-        int size = 5; // default page size is 5
+        int size = 10; // default page size is 5
 
         if (request.getParameter("page") != null && !request.getParameter("page").isEmpty()) {
             page = Integer.parseInt(request.getParameter("page")) - 1;
@@ -74,7 +74,7 @@ public class ClienteController {
     }
 
     @GetMapping("/cnpj")
-    public ModelAndView listarPorCnpj(ModelMap model, HttpServletRequest request,
+    public ModelAndView listarClientesPorCnpj(ModelMap model, HttpServletRequest request,
                                       @RequestParam(value = "cnpj") String cnpj) {
 
         int page = 0; // default page number is 0 (yes it is weird)

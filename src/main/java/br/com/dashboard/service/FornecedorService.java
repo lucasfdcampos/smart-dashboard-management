@@ -64,8 +64,13 @@ public class FornecedorService {
         return new PageImpl<>(this.fornecedorRepository.findAll(), pageRequest, size);
     }
 
-    public Page<Fornecedor> search(String searchTerm, int page, int size) {
+    public Page<Fornecedor> searchNome(String searchTerm, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "nome");
-        return this.fornecedorRepository.search(searchTerm.toLowerCase(), pageRequest);
+        return this.fornecedorRepository.searchNome(searchTerm.toLowerCase(), pageRequest);
+    }
+
+    public Page<Fornecedor> searchCnpj(String searchTerm, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.Direction.ASC, "cnpj");
+        return this.fornecedorRepository.searchCnpj(searchTerm.toLowerCase(), pageRequest);
     }
 }

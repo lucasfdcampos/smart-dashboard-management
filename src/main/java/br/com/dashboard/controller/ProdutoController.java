@@ -26,7 +26,6 @@ public class ProdutoController {
     @Autowired
     private ProdutoRepository produtoRepository;
 
-
     @GetMapping("/list")
     public ModelAndView listarProdutos(ModelMap model, HttpServletRequest request) {
 
@@ -76,7 +75,7 @@ public class ProdutoController {
 
     @GetMapping("/descricao")
     public ModelAndView listarProdutosPorDescricao(ModelMap model, HttpServletRequest request,
-                                                @RequestParam(value = "descricao") String descricao) {
+                                                   @RequestParam(value = "descricao") String descricao) {
 
         int page = 0; // default page number is 0 (yes it is weird)
         int size = 10; // default page size is 10
@@ -104,20 +103,6 @@ public class ProdutoController {
     public Produto getProduto(Long id) {
         return this.produtoService.findById(id);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // ####### METODOS API-REST
