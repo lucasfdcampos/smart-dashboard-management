@@ -1,6 +1,8 @@
 package br.com.dashboard.model;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
@@ -14,7 +16,7 @@ public class TipoPagamento implements Serializable {
         super();
     }
 
-    public TipoPagamento(Long id, @NotNull String descricao, StatusPagamento status) {
+    public TipoPagamento(Long id, @NotNull @NotEmpty @NotBlank String descricao, StatusPagamento status) {
         super();
         this.id = id;
         this.descricao = descricao;
@@ -27,6 +29,8 @@ public class TipoPagamento implements Serializable {
     private Long id;
 
     @NotNull
+    @NotEmpty(message = "Informe a descrição.")
+    @NotBlank(message = "Descrição não pode ser em branco.")
     @Column(nullable = false, name = "descricao")
     private String descricao;
 

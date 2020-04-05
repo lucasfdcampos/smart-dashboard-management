@@ -2,7 +2,7 @@
 <div th:fragment="corpo">
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Clientes</h1>
+        <h1 class="h3 mb-0 text-gray-800">Tipos de Pagamento</h1>
     </div>
 
     <!-- Content Row -->
@@ -18,23 +18,20 @@
                     <nav class="navbar">
 
                         <div class="container-fluid">
-                            <form class="form-inline" method="get" role="search" th:action="@{/cliente/nome}">
+                            <form class="form-inline" method="get" role="search"
+                                  th:action="@{/tipopagamento/descricao}">
                                 <div class="form-group">
-                                    <input class="form-control mr-sm-2" name="nome" placeholder="nome" type="text">
+                                    <input class="form-control mr-sm-2" name="descricao" placeholder="descrição"
+                                           type="text">
                                 </div>
                                 <button class="btn btn-primary my-2 my-sm-0" type="submit">
                                     <i class="fas fa-search"></i>  Localizar
                                 </button>
                             </form>
 
-                            <form class="form-inline" method="get" role="search" th:action="@{/cliente/cnpj}">
-                                <div class="form-group">
-                                    <input class="form-control mr-sm-2" name="cnpj" placeholder="cnpj" type="text">
-                                </div>
-                                <button class="btn btn-primary my-2 my-sm-0" type="submit">
-                                    <i class="fas fa-search"></i>  Localizar
-                                </button>
-                            </form>
+                            <a class="btn btn-info" th:href="@{/tipopagamento/save}">
+                                <i class="fas fa-plus-circle"></i>  Adicionar
+                            </a>
                         </div>
 
                     </nav>
@@ -49,31 +46,37 @@
                 <!-- Col-md-12 -->
                 <div class="col-md-12">
 
+                    <th:block th:include="payments/alert"></th:block>
+
                     <div class="card">
-                        <!--
-                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <p class="category">Lista de clientes</p>
-                        </div>
-                        -->
+
                         <div class="card-block">
                             <table class="table table-striped table-hover">
                                 <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>NOME</th>
-                                    <th>CNPJ</th>
+                                    <th>DESCRIÇÃO</th>
+                                    <th>STATUS</th>
                                     <th>AÇÃO</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr th:each="c : ${clientes}">
-                                    <td th:text="${c.id}"></td>
-                                    <td th:text="${c.nome}"></td>
-                                    <td th:text="${c.cnpj}"></td>
+                                <tr th:each="t : ${tiposPagamento}">
+                                    <td th:text="${t.id}"></td>
+                                    <td th:text="${t.descricao}"></td>
+                                    <td th:text="${t.status}"></td>
                                     <td>
-                                        <a class="btn btn-dark vBtn" th:href="@{/cliente/findOne/(id=${c.id})}"
+                                        <a class="btn btn-dark vBtn" th:href="@{/tipopagamento/findOne/(id=${t.id})}"
                                            title="Visualizar" data-toggle="tooltip">
                                             <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a class="btn btn-dark" th:href="@{/tipopagamento/update/{id}(id=${t.id})}"
+                                           title="Editar" data-toggle="tooltip">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </a>
+                                        <a class="btn btn-dark dBtn" th:href="@{/tipopagamento/delete/{id}(id=${t.id})}"
+                                           title="Excluir" data-toggle="tooltip">
+                                            <i class="fas fa-trash"></i>
                                         </a>
                                     </td>
                                 </tr>
@@ -81,27 +84,27 @@
                             </table>
 
                             <!-- Pagination -->
-                            <nav aria-label="Pagination" th:if="${clientes.totalPages gt 0}">
+                            <nav aria-label="Pagination" th:if="${tiposPagamento.totalPages gt 0}">
                                 <ul class="pagination justify-content-center font-weight-bold">
-                                    <li class="page-item" th:classappend="${clientes.number eq 0} ? 'disabled'">
+                                    <li class="page-item" th:classappend="${tiposPagamento.number eq 0} ? 'disabled'">
                                         <a class="page-link"
-                                           th:href="@{/cliente/list?page={id}(id=${clientes.number lt 2 ? 1 : clientes.number})}"
+                                           th:href="@{/tipopagamento/list?page={id}(id=${tiposPagamento.number lt 2 ? 1 : tiposPagamento.number})}"
                                            aria-label="Previous" title="Anterior" data-toggle="tooltip">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
 
-                                    <li class="page-item" th:classappend="${i eq clientes.number + 1} ? 'active'"
-                                        th:each="i : ${#numbers.sequence( 1, clientes.totalPages, 1)}">
-                                        <a class="page-link" th:href="@{/cliente/list?page={id}(id=${i})}"
+                                    <li class="page-item" th:classappend="${i eq tiposPagamento.number + 1} ? 'active'"
+                                        th:each="i : ${#numbers.sequence( 1, tiposPagamento.totalPages, 1)}">
+                                        <a class="page-link" th:href="@{/tipopagamento/list?page={id}(id=${i})}"
                                            th:text="${i}"
                                            th:title="${'Página '+ i}" data-toggle="tooltip"></a>
                                     </li>
 
                                     <li class="page-item"
-                                        th:classappend="${clientes.number + 1 eq clientes.totalPages} ? 'disabled'">
+                                        th:classappend="${tiposPagamento.number + 1 eq tiposPagamento.totalPages} ? 'disabled'">
                                         <a class="page-link"
-                                           th:href="@{/cliente/list?page={id}(id=${clientes.number + 2})}"
+                                           th:href="@{/tipopagamento/list?page={id}(id=${tiposPagamento.number + 2})}"
                                            aria-label="Next" title="Próxima" data-toggle="tooltip">
                                             <span aria-hidden="true">&raquo;</span>
                                         </a>
@@ -119,14 +122,18 @@
             </div>
             <!-- End of Row Content -->
 
-            <th:block th:include="clients/viewModal"></th:block>
+            <th:block th:include="payments/viewModal"></th:block>
+
+            <!-- <th:block th:include="payments/newModal"></th:block> -->
+
+            <!-- <th:block th:include="payments/editModal"></th:block> -->
 
         </div>
         <!-- End of Begin Page Content container-fluid -->
 
     </div>
 
-    <th:block th:include="clients/scripts"></th:block>
+    <th:block th:include="payments/scripts"></th:block>
 
 </div>
 </html>

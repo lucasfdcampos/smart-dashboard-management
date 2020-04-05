@@ -1,0 +1,73 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="corpo">
+
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h2 class="h3 mb-0 text-gray-800">Cadastro</h2>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+
+        <!-- Begin Page Content container-fluid -->
+        <div class="container-fluid">
+
+            <form th:action="${tipoPagamento.id == null} ? @{/tipopagamento/save} : @{/tipopagamento/update}"
+                  th:object="${tipoPagamento}" th:method="post">
+
+                <div class="row">
+                    <div class="form-group">
+                        <input type="hidden" class="form-control" id="id" th:field="*{id}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="descricao" class="col-form-label">Descrição:</label>
+                            <input value="" type="text" class="form-control" id="descricao"
+                                   th:field="*{descricao}"/>
+
+                            <div class="text text-danger" th:if="${#fields.hasErrors('descricao')}"
+                                 th:errors="*{descricao}">
+                                 <span th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}"
+                                       th:text="${message}"
+                                       class="label label-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <div class="form-group">
+                            <label for="status" class="col-form-label">Status:</label>
+                            <select th:field="*{status}" id="status" class="form-control">
+                                <option th:each="status : ${statusList}"
+                                        th:text="${status}" th:value="${status}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                       <hr>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="Salvar"/>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+        <!-- End of Begin Page Content container-fluid -->
+
+    </div>
+</div>
+</html>

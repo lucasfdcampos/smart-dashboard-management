@@ -1,70 +1,136 @@
 package br.com.dashboard.controller;
 
+import br.com.dashboard.model.StatusPagamento;
 import br.com.dashboard.model.TipoPagamento;
+import br.com.dashboard.repository.TipoPagamentoRepository;
 import br.com.dashboard.service.TipoPagamentoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
-@RestController
-@RequestMapping(path = "/api/tipopagamento")
+@Controller
+@RequestMapping(path = "tipopagamento")
 public class TipoPagamentoController {
 
     @Autowired
     private TipoPagamentoService tipoPagamentoService;
 
-    @GetMapping(value = "/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public TipoPagamento getTipoPagamento(@PathVariable("id") Long id) {
+    @Autowired
+    private TipoPagamentoRepository tipoPagamentoRepository;
+
+    @GetMapping("/list")
+    public ModelAndView listarTiposPagamento(ModelMap model, HttpServletRequest request) {
+
+        int page = 0; // default page number is 0 (yes it is weird)
+        int size = 10; // default page size is 10
+
+        if (request.getParameter("page") != null && !request.getParameter("page").isEmpty()) {
+            page = Integer.parseInt(request.getParameter("page")) - 1;
+        }
+
+        if (request.getParameter("size") != null && !request.getParameter("size").isEmpty()) {
+            size = Integer.parseInt(request.getParameter("size"));
+        }
+
+        Page<TipoPagamento> tipoPagamentoPage = tipoPagamentoRepository.findAll(PageRequest.of(page, size));
+
+        model.addAttribute("tiposPagamento", tipoPagamentoPage);
+        model.addAttribute("conteudo", "/payments/list");
+
+        return new ModelAndView("index2", model);
+    }
+
+    @GetMapping("/descricao")
+    public ModelAndView listarProdutosPorCodigo(ModelMap model, HttpServletRequest request,
+                                                @RequestParam(value = "descricao") String descricao) {
+
+        int page = 0; // default page number is 0 (yes it is weird)
+        int size = 10; // default page size is 10
+
+        if (request.getParameter("page") != null && !request.getParameter("page").isEmpty()) {
+            page = Integer.parseInt(request.getParameter("page")) - 1;
+        }
+
+        if (request.getParameter("size") != null && !request.getParameter("size").isEmpty()) {
+            size = Integer.parseInt(request.getParameter("size"));
+        }
+
+        if (descricao == null) {
+            return new ModelAndView("redirect:/payments/list");
+        }
+
+        model.addAttribute("tiposPagamento", this.tipoPagamentoService.search(descricao, page, size));
+        model.addAttribute("conteudo", "/payments/list");
+
+        return new ModelAndView("index2", model);
+    }
+
+    @GetMapping("/findOne")
+    @ResponseBody
+    public TipoPagamento getTipoPagamento(Long id) {
+
         return this.tipoPagamentoService.findById(id);
     }
 
-    @GetMapping(value = "/descricao/{descricao}")
-    @ResponseStatus(HttpStatus.OK)
-    public TipoPagamento getTipoPagamentoDescricao(@PathVariable("descricao") String descricao) {
-        return this.tipoPagamentoService.findByDescricao(descricao);
+    @GetMapping("/save")
+    public ModelAndView cadastro(TipoPagamento tipoPagamento) {
+
+        return new ModelAndView("index2", "conteudo", "/payments/add");
     }
 
-    @PostMapping(value = "/add")
-    public TipoPagamento addTipoPagamento(@RequestBody TipoPagamento tipoPagamento) {
+    @RequestMapping(path = "/save", method = RequestMethod.POST)
+    public ModelAndView createTipoPagamento(@Valid TipoPagamento tipoPagamento, BindingResult result,
+                                            RedirectAttributes attrib) {
+
+        if (result.hasErrors()) {
+            return new ModelAndView("index2", "conteudo", "/payments/add");
+        }
+
         this.tipoPagamentoService.save(tipoPagamento);
-        return tipoPagamento;
+        attrib.addFlashAttribute("mensagem", "Tipo de Pagamento inserido com sucesso.");
+        return new ModelAndView("redirect:/tipopagamento/list");
     }
 
-    @PutMapping(value = "/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public TipoPagamento updateTipoPagamento(@PathVariable("id") Long id, TipoPagamento tipoPagamento) {
-        this.tipoPagamentoService.update(id, tipoPagamento);
-        return tipoPagamento;
+    @GetMapping("/update/{id}")
+    public ModelAndView editar(@PathVariable("id") Long id, ModelMap model) {
+
+        model.addAttribute("tipoPagamento", this.tipoPagamentoService.findById(id));
+        model.addAttribute("conteudo", "/payments/add");
+        return new ModelAndView("index2", model);
     }
 
-    @DeleteMapping(value = "/{id}")
-    public ResponseEntity<String> deleteTipoPagamento(@PathVariable("id") Long id) {
+    @RequestMapping(path = "/update", method = RequestMethod.POST)
+    public ModelAndView updateTipoPagamento(@Valid TipoPagamento tipoPagamento, BindingResult result,
+                                            RedirectAttributes attrib) {
+
+        if (result.hasErrors()) {
+            return new ModelAndView("index2", "conteudo", "/payments/add");
+        }
+
+        this.tipoPagamentoService.update(tipoPagamento.getId(), tipoPagamento);
+        attrib.addFlashAttribute("mensagem", "Tipo de Pagamento editado com sucesso.");
+        return new ModelAndView("redirect:/tipopagamento/list");
+    }
+
+    @RequestMapping(path = "/delete/{id}", method = RequestMethod.GET)
+    public ModelAndView deleteTipoPagamento(@PathVariable("id") Long id, RedirectAttributes attrib) {
         this.tipoPagamentoService.delete(id);
-        return new ResponseEntity<String>("DELETED", HttpStatus.OK);
+        attrib.addFlashAttribute("mensagem", "Tipo de Pagamento removido com sucesso.");
+        return new ModelAndView("redirect:/tipopagamento/list");
     }
 
-    @GetMapping(value = "/list")
-    @ResponseStatus(HttpStatus.OK)
-    public List<TipoPagamento> findAll() {
-        return this.tipoPagamentoService.findAll();
-    }
+    @ModelAttribute("statusList")
+    public StatusPagamento[] statusPagamentos() {
 
-    @GetMapping(value = "/list-pagination")
-    @ResponseStatus(HttpStatus.OK)
-    public Page<TipoPagamento> findAllPagination() {
-        return this.tipoPagamentoService.findAllPagination();
-    }
-
-    @GetMapping(value = "/search")
-    @ResponseStatus(HttpStatus.OK)
-    public Page<TipoPagamento> search(@RequestParam("searchTerm") String searchTerm,
-                                      @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                                      @RequestParam(value = "size", required = false, defaultValue = "0") int size) {
-        return this.tipoPagamentoService.search(searchTerm, page, size);
+        return StatusPagamento.values();
     }
 }
