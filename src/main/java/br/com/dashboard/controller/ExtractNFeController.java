@@ -20,7 +20,8 @@ public class ExtractNFeController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> extractNFe() {
         try {
-            String response = this.extractNFeService.sweepDirectory();
+            Integer qtNfesImportado = this.extractNFeService.sweepDirectory();
+            String response = qtNfesImportado.toString();
             return new ResponseEntity<String>(response, HttpStatus.OK);
 
         } catch (Exception e) {

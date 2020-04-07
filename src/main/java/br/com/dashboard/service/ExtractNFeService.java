@@ -63,8 +63,9 @@ public class ExtractNFeService {
     public ExtractNFeService() {
     }
 
-    public String sweepDirectory() throws Exception {
+    public Integer sweepDirectory() throws Exception {
         File dir = new File(directory);
+        Integer qtXmls = 0;
 
         // Unzip files
         for (File arquivo : dir.listFiles()) {
@@ -82,10 +83,11 @@ public class ExtractNFeService {
 
             if (mimeType.equals("text/xml")) {
                 readXml(arquivo.getAbsolutePath());
+                qtXmls++;
                 arquivo.delete();
             }
         }
-        return "OK";
+        return qtXmls;
     }
 
     private void unzip(String zipFilePath) throws IOException {
